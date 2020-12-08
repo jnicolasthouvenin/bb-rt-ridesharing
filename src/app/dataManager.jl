@@ -40,16 +40,19 @@ function openFile(fileName::String)
     return f
 end
 
-# parse un fichier simulation et retourne les requetes
+# parse un fichier simulation et retourne la liste des requetes
 function parseSimulation(fileName::String)
     f = openFile(fileName)
     nbShuttles = parse(Int,readline(f))
     nbRequest = parse(Int,readline(f))
-    for request in 1:nbRequest
+    requests = Vector{Request}(undef,nbRequest)
+    for indexRequest in 1:nbRequest
         splittedLine = split(readline(f),' ')
         t = parse(Int,splittedLine[1])
         departureStation = string(splittedLine[2])
         arrivalStation = string(splittedLine[3])
-        
+        rq = Request(t,departureStation,arrivalStation)
+        requests[indexRequest] = rq
     end
+    return requests
 end

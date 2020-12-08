@@ -35,7 +35,7 @@ struct TripRequest
     epsilon::Int
 end
 
-struct request
+struct Request
     t::Int
     departureStation::String
     arrivalStation::String
