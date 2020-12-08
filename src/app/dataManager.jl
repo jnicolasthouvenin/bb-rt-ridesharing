@@ -15,20 +15,7 @@ function getStations(fileName::String)
         splitLine = split(line," ")
         stations[indexStation] = Station(indexStation, splitLine[1],parse(Float64,splitLine[3]),parse(Float64,splitLine[2])) # construction de la station
     end
-    return stations
-end
-
-# retourne la station du vecteur stations dont le nom est stationName
-function getStation(stationName::String,stations::Array{Station,1})
-    found = false
-    indexStation = 1
-    while !found && indexStation <= length(stations)
-        if stations[indexStation].name == stationName # on a trouvé la station
-            found = true
-        end
-        indexStation += 1
-    end
-    return stations[indexStation-1]
+    return Dict(station.name => station for station in stations)
 end
 
 # retourne le fichier ouvert correspondant au nom donné
