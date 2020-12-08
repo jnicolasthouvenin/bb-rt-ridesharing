@@ -1,3 +1,4 @@
 # Branch and Bound - Real Time Ridesharing
 
-Project as part of the course "Discrete and Combinatorial Optimization". Master 1 Optimization et Operational Research.
+Sudent project as part of the course "Discrete and Combinatorial Optimization".
+Master 1 Optimization et Operational Research.
