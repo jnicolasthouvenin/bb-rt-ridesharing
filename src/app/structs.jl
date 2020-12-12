@@ -44,8 +44,16 @@ end
 ##############################
 
 mutable struct Node
-    nom::String
-    children::Array{Node,1}
+    eltsRemaining::Array{Elt,1}
+    dT::Float64
+    lowBound::Float64
+    children::Set{Node}
+end
+
+mutable struct Elt
+    id::Int
+    name::String
+    cMin::Float64
 end
 
 Base.show(io::IO, n::Node) = print(io, n.nom," -> ",n.children)
