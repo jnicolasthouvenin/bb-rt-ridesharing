@@ -7,6 +7,8 @@ println("Precompiling packages...")
 
 include("structs.jl")
 include("dataManager.jl")
+include("branchAndBound.jl")
+include("../vendors/tools.jl")
 
 function main()
     println("main")
