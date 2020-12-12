@@ -3,7 +3,7 @@
 Gère l'accès et la manipulation des données
 """
 
-const DATAPATH = "../data";
+const DATAPATH = "../../data";
 
 # retourne un Array{Station,1} d'objets Station
 function getStations(fileName::String)
@@ -28,7 +28,7 @@ function openFile(fileName::String)
 end
 
 # parse un fichier simulation et retourne la liste des requetes
-function parseSimulation(fileName::String)
+function parseRequests(fileName::String)
     f = openFile(fileName)
     nbShuttles = parse(Int,readline(f))
     nbRequest = parse(Int,readline(f))
@@ -41,9 +41,5 @@ function parseSimulation(fileName::String)
         rq = Request(t,departureStation,arrivalStation)
         requests[indexRequest] = rq
     end
-<<<<<<< HEAD
     return requests
 end
-=======
-end
->>>>>>> b7cc95c5c05142bb787420d5034fc759dae4f84e

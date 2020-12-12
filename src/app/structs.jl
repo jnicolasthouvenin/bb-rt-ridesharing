@@ -40,3 +40,22 @@ struct Request
     departureStation::String
     arrivalStation::String
 end
+
+##############################
+
+mutable struct Node
+    nom::String
+    children::Array{Node,1}
+end
+
+Base.show(io::IO, n::Node) = print(io, n.nom," -> ",n.children)
+function Base.show(io::IO, t::Array{Node,1})
+    print(io, "(")
+    for i in 1:length(t)
+        try
+            Base.show(io, t[i])
+        catch
+        end
+    end
+    print(io, ")")
+end
