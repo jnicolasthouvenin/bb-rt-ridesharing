@@ -44,13 +44,16 @@ end
 ##############################
 
 mutable struct Node
-    eltsRemaining::Array{Elt,1}
+    passedElts::Array{Elt,1}
+    futureElts::Array{Elt,1}
+    e::Elt
+    h::Int
     dT::Float64
-    lowBound::Float64
-    children::Set{Node}
+    lowerBound::Float64
+    children::Array{Node,1}
 end
 
-mutable struct Elt
+struct Elt
     id::Int
     name::String
     cMin::Float64
