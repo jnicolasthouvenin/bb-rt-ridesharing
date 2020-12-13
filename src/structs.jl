@@ -35,6 +35,7 @@ struct Elt
     state::Etat
     idReq::Int
     isSource::Bool
+    sourceRemaining::Bool
     limit::Float64 # si elt est un s alors limit dépend de w et r, si elt est un e alors limit dépend de s et epsilon et e (1+epsilon)d(s,e)
     name::String
     cMin::Float64

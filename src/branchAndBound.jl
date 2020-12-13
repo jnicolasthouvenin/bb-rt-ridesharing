@@ -154,7 +154,7 @@ function branchAndBoundBis(L::Vector{Elt},A::Matrix{Float64})
         tuple = bestNode(root,upperBound)
         if tuple[1] == false
             finished = true
-            println("\nlastBestNode = ",lastBestNode.e.name)
+            #println("\nlastBestNode = ",lastBestNode.e.name)
         else
 
             aff(root)
@@ -168,6 +168,8 @@ function branchAndBoundBis(L::Vector{Elt},A::Matrix{Float64})
             end
         end
     end
+    bestNode(root,upperBound)
+    aff(root)
 end
 
 function getLowerBound(v::Vector{Elt})
@@ -176,6 +178,10 @@ function getLowerBound(v::Vector{Elt})
         lb += e.cMin
     end
     return lb
+end
+
+function bestNodeBis(node::Node, upperBound::Float64; str="")
+
 end
 
 # retourne le meilleur noeud ainsi que sa lowerBound de l'arbre
@@ -241,6 +247,33 @@ function expendNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts:
         lowerBound = dT + sumFutureCMin # borne inf de l'enfant
         println("lowerBound = ",lowerBound)
         # vérification des contraintes w et epsilon
+        
+        if e.state == E && e.sourceRemaining
+            distance = 0
+            source = 0
+            if node.e.state == S && node.e.idReq == e.idReq # la source que l'on cherche est juste au dessus de notre noeud
+                source = node.e
+                distance = A[node.e.id,e.id]
+            elseif # source est contenue dans la liste des elts passés de node
+                sourceFound = false
+                indexElt = 1
+                while !sourceFound && indexElt <= length(node.passedElts) # on parcours la liste des noeuds placés
+                    eltBuffer = node.passedElts[indexElt]
+                    if eltBuffer.state == S && eltBuffer.idReq == e.idReq # c'est la source !
+                        distance = node.dT + A[node.e.id,e.id] - eltBuffer.dT
+                        sourceFound = true
+                        source = eltBuffer
+                    end
+                end
+            else
+                println("C'EST PAS NORMAL WTF !!!")
+                exit()
+            end
+            if distance < (1+epsilon)*A[source.id,e.id] # la contrainte de trajet est respectée
+
+            end
+        end
+        
         if !(dT < e.limit) || lowerBound > upperBound # si l'enfant est au mieux plus mauvais que la borne sup connue
             println("           [trop mauvais, supprimé]")
             node.children[indexChild] = emptyNode()
