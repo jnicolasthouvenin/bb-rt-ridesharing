@@ -46,6 +46,8 @@ end
 
 struct Elt
     id::Int
+    state::Etat
+    idReq::Int
     isSource::Bool
     limit::Float64 # si elt est un s alors limit dépend de w et r, si elt est un e alors limit dépend de s et epsilon et e (1+epsilon)d(s,e)
     name::String
@@ -64,7 +66,7 @@ mutable struct Node
 end
 
 function emptyElt()
-    return Elt(0,true,0.,"",0.)
+    return Elt(0, Non, 0, true, 0., "", 0.)
 end
 
 function emptyNode()
