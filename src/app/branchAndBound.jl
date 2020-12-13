@@ -15,7 +15,7 @@ function bestNode(node::Node, upperBound::Float64)
         for indexChild in 1:length(node.children) # on itère sur les enfants
             child = node.children[indexChild] # récupération de l'enfant
             if child.lowerBound > upperBound # si l'enfant possède une borne inf plus grande que la borne sup connue
-                node.children[indexChild] = Node() # on le supprime
+                node.children[indexChild] = emptyNode() # on le supprime
             else # sinon
                 tuple = bestNode(child, upperBound) # on calcule le meilleur noeuf récursivement
                 if tuple[2] < min # si le noeud a une meilleure borne inf que celle connue
@@ -28,6 +28,22 @@ function bestNode(node::Node, upperBound::Float64)
     end
 end
 
-function expendNode(node::Node, A::Array{Int,2})
-    
+function expendNode(node::Node, upperBound::Float64, A::Array{Int,2}, nbElts::Int)
+    for indexChild in 1:length(node.futureElts) # parcours des éléments qui vont devenir les enfants de ce noeud
+        e = node.futureElts[indexChild] # élément courant
+        # calcul de sa lowerBound
+        dT = A[node.e.id,e.id] # distance entre le noeud courant et l'enfant
+        lowerBound = dT + node.lowerBound - e.cMin # borne inf de l'enfant
+        if lowerBound > upperBound # si l'enfant est au mieux plus mauvais que la borne sup connue
+            node.children[indexChild] = emptyNode()
+        else # l'enfant a une chance d'être meilleur que la borne sup connue
+            # construction des attributs du nouvel enfant
+            nbFutureElts = node.h - 1 # nombre d'elts restants de l'enfant
+            nbPassedElts = nbElts - 1 - nbFutureElts # nombre d'elts précédents de l'enfant
+            passedElts[nbPassedElts] = node.e # elements précédents
+            futureElts = newFutureElts(futureElts,nbFutureElts) # elements suivants
+            children = Vector{Node}(undef,nbFutureElts)
+            node.children[indexChild] = Node(false,passedElts,futureElts,e,h,dT,lowerBound,children) # création de l'enfant
+        end
+    end
 end

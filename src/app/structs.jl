@@ -44,6 +44,7 @@ end
 ##############################
 
 mutable struct Node
+    empty::Bool
     passedElts::Array{Elt,1}
     futureElts::Array{Elt,1}
     e::Elt
@@ -57,6 +58,17 @@ struct Elt
     id::Int
     name::String
     cMin::Float64
+end
+
+function emptyElt()
+    return Elt(0,"",0.)
+end
+
+function emptyNode()
+    passedElts = Vector{Elt}(undef,0)
+    futureElts = Vector{Elt}(undef,0)
+    children= Vector{Node}(undef,0)
+    return Node(true,passedElts,futureElts,emptyElt(),0,0.,0.,children)
 end
 
 Base.show(io::IO, n::Node) = print(io, n.nom," -> ",n.children)
