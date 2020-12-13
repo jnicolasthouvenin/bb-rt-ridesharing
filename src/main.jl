@@ -202,9 +202,9 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
 end
 
 function jules()
-    e1 = Elt(2,false,20.,"e1",2)
-    s2 = Elt(3,true,20.,"s2",1)
-    e2 = Elt(4,false,20.,"e2",1)
+    e1 = Elt(2,E,1,false,20.,"e1",2)
+    s2 = Elt(3,S,2,true,20.,"s2",1)
+    e2 = Elt(4,E,2,false,20.,"e2",1)
     
     L = [e1,s2,e2]
 
@@ -215,7 +215,8 @@ function jules()
         5. 2. 1. 0.
     ]
 
-    branchAndBound(L,A)
+    #branchAndBound(L,A)
+    branchAndBoundBis(L,A)
 
     println("end")
 end
