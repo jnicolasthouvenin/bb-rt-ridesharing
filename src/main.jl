@@ -90,7 +90,10 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
     	while actualTime +  < requests[indReq].t
     		if indTimeStation > indDepStation
     			indTimeStation -= 1
+<<<<<<< HEAD
     
+=======
+>>>>>>> 1b3504f3ca960e03ea869f24add2e8485ba09899
 end
 
 function jules()
