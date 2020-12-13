@@ -44,7 +44,7 @@ function calculDistLatLong(stations::Vector{Station})
 	end
     return distStations
 end
-#=
+
 function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5)
     allStation = getStations("stations.dat")
     distStation = calculDistLatLong(allStations) / SPEED_VEHICLE
@@ -137,7 +137,7 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
 		timeLeft = requests[indReq].t - (actualTime + trajTime)
 	end
 end
-=#
+
 function jules()
     e1 = Elt(2,false,20.,"e1",2)
     s2 = Elt(3,true,20.,"s2",1)
