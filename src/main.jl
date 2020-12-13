@@ -5,14 +5,14 @@ Fichier principal
 
 println("Precompiling packages...")
 
-include("structs.jl")
-include("dataManager.jl")
-include("branchAndBound.jl")
-
 const MAX_CAPAVEHICLE = 20
 const SPEED_VEHICLE = 20
 
 @enum Etat S R E Non
+
+include("structs.jl")
+include("dataManager.jl")
+include("branchAndBound.jl")
 
 function formul(lat1::Float64, long1::Float64, lat2::Float64, long2::Float64)
     r = 6371008
