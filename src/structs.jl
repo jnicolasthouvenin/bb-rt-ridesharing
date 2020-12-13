@@ -7,6 +7,7 @@ import Base.show
 
 # objet Station modélisant une station de navette
 struct Station
+    id::Int
     name::String
     latitude::Float64
     longitude::Float64
@@ -88,4 +89,8 @@ function Base.show(io::IO, t::Array{Node,1})
         end
     end
     print(io, ")")
+<<<<<<< HEAD
 end=#
+=======
+end
+>>>>>>> 76fb20ed44d335e01942e4fa55847b803b4c1ee3

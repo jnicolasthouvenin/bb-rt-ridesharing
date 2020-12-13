@@ -15,7 +15,7 @@ function getStations(fileName::String)
         splitLine = split(line," ")
         stations[indexStation] = Station(indexStation, splitLine[1],parse(Float64,splitLine[3]),parse(Float64,splitLine[2])) # construction de la station
     end
-    return Dict(station.name => station for station in stations)
+    return stations
 end
 
 # retourne le fichier ouvert correspondant au nom donné

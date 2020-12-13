@@ -43,19 +43,58 @@ function calculDistLatLong(stations::Vector{Station})
     return distStations
 end
 
-function main()
+function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5)
     allStation = getStations("stations.dat")
-    distStation = calculDistLatLong(allStations)
+    distStation = calculDistLatLong(allStations) /
     
-    # Landreau, Cousteau, Perray, ZI1Garde, Lycee, Gare et Centre
+    # Landreau, Cousteau, Perray, ZI1Garde, Lycee, Carquefou-Gare et Carquefou-Centre
     indActualStation = [1, 2, 3 ,4 ,7, 9, 12]
     
-    actualStation = allStation[indActualStation]
-    actualDistance = distStation[indActualStation, indActualStation]
+    actualStation = allStation[indActualStation]									# Les stations utilisées
+    dictActualStation = Dict(station.name => station for station in actualStation) 	# Dictionnaire pour récuperer les stations depuis leurs nom					
+    actualDistance = distStation[indActualStation, indActualStation]				# La distance entre ces stations
+    requests, nbShuttles = parseRequests("simulation1.dat")							# On récupère la liste des requètes
+    nbRequests = length(requests)													# Calcul du nombre de requete
     
-    requests = parseRequests("simulation1.dat")
+    tripDate = Array{Float64, 2}(undef, nbRequests, 3)								# Matrice qui retiendra le temps de reception d'une demande, de la
+    for iter = 1:nbRequests*3    													# récupération et de l'amenage du client
+    	tripDate[iter] = -1
+    end
     
+    actualTime = requests[1].t														# Temps réel de la navette
+    iterTripDone = 1																# Indice du dernier élement effectué
+    
+<<<<<<< HEAD
     actualTime = 0
+=======
+    #= Pour une navette pour le moment =#
+    
+    trip = Vector{Elt}(undef, 3*nbRequests) 										# Liste du trip pour une navette
+    trip[1] = Elt(1, false, "r1", 0.)												# On fixe la première demande au début du trip de la première navette
+    trip[2] = Elt(2, false, "s1", 0.) 									
+    trip[3] = Elt(3, false, "e1", 0.)
+    #First request assigned to the first shuttle
+    
+    tripDate[1] = requests[1].t
+    
+    for indReq in 2:nbRequests
+    	indTimeStation = dictActualStation[nameFirstStation].id
+    	indDepStation = dictActualStation[requests[indReq].departureStation].id
+    	
+    	trajTime = 0
+    	if  indTimeStation > indDepStation
+    		trajTime = distStation[indTimeStation, (indTimeStation-1)]
+    	elseif indTimeStation < indDepStation
+    		trajTime = distStation[indTimeStation, (indTimeStation+1)]
+    	else
+    		trajTime = 0
+    	end
+    	
+    	while actualTime +  < requests[indReq].t
+    		if indTimeStation > indDepStation
+    			indTimeStation -= 1
+    
+>>>>>>> 76fb20ed44d335e01942e4fa55847b803b4c1ee3
 end
 
 function jules()
