@@ -8,7 +8,6 @@ println("Precompiling packages...")
 include("structs.jl")
 include("dataManager.jl")
 include("branchAndBound.jl")
-include("../vendors/tools.jl")
 
 const MAX_CAPAVEHICLE = 20
 const SPEED_VEHICLE = 20
