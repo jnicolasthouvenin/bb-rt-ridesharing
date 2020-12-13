@@ -17,24 +17,12 @@ Base.show(io::IO, x::Station) = print(io, x.name)
 
 abstract type element end
 
-struct R
-    station::String
-end
-
-struct S
-    station::String
-end
-
-struct E
-    station::String
-end
-
-struct TripRequest
+#=struct TripRequest
     s::S
     e::E
     w::Int
     epsilon::Int
-end
+end=#
 
 struct Request
     t::Int

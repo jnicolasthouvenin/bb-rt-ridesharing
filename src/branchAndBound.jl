@@ -18,6 +18,8 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64})
 
     println("tuple = ",tuple)
 
+    println("-------------------------------------------------------------")
+
     aff(root)
 
     println("")
@@ -40,6 +42,8 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64})
     println("tuple[1] = ",tuple[1].e.name)
     println("tuple[2] = ",tuple[2])
 
+    println("-------------------------------------------------------------")
+
     aff(root)
 
     println("")
@@ -52,6 +56,8 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64})
 
     println("tuple[1] = ",tuple[1].e.name)
     println("tuple[2] = ",tuple[2])
+
+    println("-------------------------------------------------------------")
 
     aff(root)
 
