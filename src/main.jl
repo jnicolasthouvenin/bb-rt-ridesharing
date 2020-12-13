@@ -64,9 +64,6 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
     actualTime = requests[1].t														# Temps réel de la navette
     iterTripDone = 1																# Indice du dernier élement effectué
     
-<<<<<<< HEAD
-    actualTime = 0
-=======
     #= Pour une navette pour le moment =#
     
     trip = Vector{Elt}(undef, 3*nbRequests) 										# Liste du trip pour une navette
@@ -94,7 +91,6 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
     		if indTimeStation > indDepStation
     			indTimeStation -= 1
     
->>>>>>> 76fb20ed44d335e01942e4fa55847b803b4c1ee3
 end
 
 function jules()
