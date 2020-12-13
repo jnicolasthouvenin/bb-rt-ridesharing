@@ -53,10 +53,19 @@ function main()
     
     actualStation = allStation[indActualStation]
     actualDistance = distStation[indActualStation, indActualStation]
-    
-    requests = parseRequests("simulation1.dat")
+    cMinList = [min(actualDistance[1:end, iter] for iter=1:
+    requests, nbShuttles = parseRequests("simulation1.dat")
     
     actualTime = 0
+    
+    #= Pour une navette pour le moment =#
+    
+    trip = Vector{Elt}(undef, 3*length(requests))
+    trip[1] = Elt(Landreau
+    #First request assigned to the first shuttle
+    
+    for req in requests
+    
     
     
     
