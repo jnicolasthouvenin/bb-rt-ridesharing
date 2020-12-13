@@ -43,6 +43,13 @@ end
 
 ##############################
 
+struct Elt
+    id::Int
+    isSource::Bool
+    name::String
+    cMin::Float64
+end
+
 mutable struct Node
     empty::Bool
     passedElts::Array{Elt,1}
@@ -54,14 +61,8 @@ mutable struct Node
     children::Array{Node,1}
 end
 
-struct Elt
-    id::Int
-    name::String
-    cMin::Float64
-end
-
 function emptyElt()
-    return Elt(0,"",0.)
+    return Elt(0,true,"",0.)
 end
 
 function emptyNode()
