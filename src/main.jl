@@ -12,6 +12,8 @@ include("branchAndBound.jl")
 const MAX_CAPAVEHICLE = 20
 const SPEED_VEHICLE = 20
 
+@enum Etat S R E Non
+
 function formul(lat1::Float64, long1::Float64, lat2::Float64, long2::Float64)
     r = 6371008
     distAng = acos( sin(lat1 * pi/180) * sin(lat2 * pi/180) + cos(lat1 * pi/180) * cos(lat2 * pi/180) * cos((long1 - long2)*pi/180) )
@@ -45,13 +47,13 @@ end
 #=
 function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5)
     allStation = getStations("stations.dat")
-    distStation = calculDistLatLong(allStations)
+    distStation = calculDistLatLong(allStations) / SPEED_VEHICLE
     
     # Landreau, Cousteau, Perray, ZI1Garde, Lycee, Carquefou-Gare et Carquefou-Centre
     indActualStation = [1, 2, 3 ,4 ,7, 9, 12]
     
     actualStation = allStation[indActualStation]									# Les stations utilisées
-    dictActualStation = Dict(station.name => station for station in actualStation) 	# Dictionnaire pour récuperer les stations depuis leurs nom					
+    dictActualStation = Dict(station.name => station for station in actualStation) 	# Dictionnaire pour avoir les stations depuis leur nom					
     actualDistance = distStation[indActualStation, indActualStation]				# La distance entre ces stations
     requests, nbShuttles = parseRequests("simulation1.dat")							# On récupère la liste des requètes
     nbRequests = length(requests)													# Calcul du nombre de requete
@@ -62,35 +64,78 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
     end
     
     actualTime = requests[1].t														# Temps réel de la navette
-    iterTripDone = 1																# Indice du dernier élement effectué
+    iterTrip = 2																	# Indice du premier élement non effectué
     
     #= Pour une navette pour le moment =#
     
     trip = Vector{Elt}(undef, 3*nbRequests) 										# Liste du trip pour une navette
-    trip[1] = Elt(1, false, "r1", 0.)												# On fixe la première demande au début du trip de la première navette
-    trip[2] = Elt(2, false, "s1", 0.) 									
-    trip[3] = Elt(3, false, "e1", 0.)
+    trip[1] = Elt(1, R, 1, false, "r1", 0.)											# On fixe la première demande au début du trip de la première navette
+    trip[2] = Elt(2, S, 1, false, "s1", 0.) 									
+    trip[3] = Elt(3, E, 1, false, "e1", 0.)
     #First request assigned to the first shuttle
     
     tripDate[1] = requests[1].t
+    indTimeStation = dictActualStation[nameFirstStation].id
     
     for indReq in 2:nbRequests
-    	indTimeStation = dictActualStation[nameFirstStation].id
-    	indDepStation = dictActualStation[requests[indReq].departureStation].id
+    
+    	if trip[iterTrip].state == S
+    		indNextStation = dictActualStation[requests[trip[iterTrip].idReq].departureStation].id
+    	elseif trip[iterTrip].state == E
+    		indNextStation = dictActualStation[requests[trip[iterTrip].idReq].arrivalStation].id
+    	else
+    		error("Tu essayes d'aller sur un sommet R ?!")
+    	end
     	
+    	    	
     	trajTime = 0
-    	if  indTimeStation > indDepStation
+    	if  indTimeStation > indNextStation
     		trajTime = distStation[indTimeStation, (indTimeStation-1)]
-    	elseif indTimeStation < indDepStation
+    	elseif indTimeStation < indNextStation
     		trajTime = distStation[indTimeStation, (indTimeStation+1)]
     	else
     		trajTime = 0
     	end
     	
-    	while actualTime +  < requests[indReq].t
-    		if indTimeStation > indDepStation
-    			indTimeStation -= 1
-    
+    	while actualTime + trajTime < requests[indReq].t
+    	
+			while actualTime + trajTime < requests[indReq].t && indTimeStation != indNextStation
+				
+				actualTime += trajTime
+				indTimeStation = eval( quote (indTimeStation > indNextStation ? :+ : :-)(indTimeStation, 1) end)
+				
+				if indTimeStation > indNextStation
+					trajTime = distStation[indTimeStation, (indTimeStation-1)]
+				elseif indTimeStation < indNextStation
+					trajTime = distStation[indTimeStation, (indTimeStation+1)]
+				else
+					trajTime = 0
+				end
+			
+			end
+			
+			if indTimeStation == indNextStation
+				iterTrip += 1
+				
+				if trip[iterTrip].state == S
+					indNextStation = dictActualStation[requests[trip[iterTrip].idReq].departureStation].id
+				elseif trip[iterTrip].state == E
+					indNextStation = dictActualStation[requests[trip[iterTrip].idReq].arrivalStation].id
+				else
+					error("Tu essayes d'aller sur un sommet R ?!")
+				end
+				
+				if  indTimeStation > indNextStation
+					trajTime = distStation[indTimeStation, (indTimeStation-1)]
+				elseif indTimeStation < indNextStation
+					trajTime = distStation[indTimeStation, (indTimeStation+1)]
+				else
+					trajTime = 0
+				end
+			end
+		end
+		timeLeft = requests[indReq].t - (actualTime + trajTime)
+	end
 end
 =#
 function jules()
