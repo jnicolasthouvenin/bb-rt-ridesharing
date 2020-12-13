@@ -17,6 +17,7 @@ include("dataManager.jl")
 include("branchAndBound.jl")
 include("tools.jl")
 
+#=
 function formul(lat1::Float64, long1::Float64, lat2::Float64, long2::Float64)
     r = 6371008
     distAng = acos( sin(lat1 * pi/180) * sin(lat2 * pi/180) + cos(lat1 * pi/180) * cos(lat2 * pi/180) * cos((long1 - long2)*pi/180) )
@@ -200,23 +201,23 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
 		#branchAndBound(listElt, matTime)
 	#end
 end
-
+=#
 function jules()
-    e1 = Elt(2,E,1,false,20.,"e1",2)
-    s2 = Elt(3,S,2,true,20.,"s2",1)
-    e2 = Elt(4,E,2,false,20.,"e2",1)
+    e1 = Elt(2,E,1,false,false,1000.,"e1",2)
+    s2 = Elt(3,S,2,true,false,1000.,"s2",1)
+    e2 = Elt(4,E,2,false,true,1000.,"e2",1)
     
-    #L = [e1,s2,e2]
+    # L = [e1,s2,e2]
 
-    #=A = [
-        0. 3. 4. 5.;
-        3. 0. 7. 2.;
-        4. 7. 0. 1.;
-        5. 2. 1. 0.
-    ]=#
+    # A = [
+    #     0. 3. 4. 5.;
+    #     3. 0. 7. 2.;
+    #     4. 7. 0. 1.;
+    #     5. 2. 1. 0.
+    # ]
 
-    s3 = Elt(5,S,3,true,10.,"s2",1)
-    e3 = Elt(6,E,3,false,20.,"e2",1)
+    s3 = Elt(5,S,3,true,false,1000.,"s3",1)
+    e3 = Elt(6,E,3,false,true,1000.,"e3",1)
 
     L = [e1,s2,e2,s3,e3]
 
@@ -230,7 +231,7 @@ function jules()
     ]
 
     #branchAndBound(L,A)
-    branchAndBoundBis(L,A)
+    branchAndBound(L,A,100.)
 
     println("end")
 end
