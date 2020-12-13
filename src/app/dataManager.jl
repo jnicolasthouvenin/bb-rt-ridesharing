@@ -41,5 +41,5 @@ function parseRequests(fileName::String)
         rq = Request(t,departureStation,arrivalStation)
         requests[indexRequest] = rq
     end
-    return requests
+    return requests, nbShuttles
 end
