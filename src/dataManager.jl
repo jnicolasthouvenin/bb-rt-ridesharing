@@ -3,7 +3,7 @@
 Gère l'accès et la manipulation des données
 """
 
-const DATAPATH = "../../data";
+const DATAPATH = "../data";
 
 # retourne un Array{Station,1} d'objets Station
 function getStations(fileName::String)

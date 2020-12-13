@@ -56,12 +56,23 @@ function main()
     requests = parseRequests("simulation1.dat")
     
     actualTime = 0
-    
-    
-    
-    
 end
 
-function aff(n::Node)
-    println(n.nom," ")
+function jules()
+    e1 = Elt(2,false,10.,"e1",2)
+    s2 = Elt(3,true,10.,"s2",1)
+    e2 = Elt(4,false,10.,"e2",1)
+    
+    L = [e1,s2,e2]
+
+    A = [
+        0. 3. 4. 5.;
+        3. 0. 7. 2.;
+        4. 7. 0. 1.;
+        5. 2. 1. 0.
+    ]
+
+    branchAndBound(L,A)
+
+    println("end")
 end
