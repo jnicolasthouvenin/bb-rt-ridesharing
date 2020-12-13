@@ -91,8 +91,4 @@ function Base.show(io::IO, t::Array{Node,1})
         end
     end
     print(io, ")")
-<<<<<<< HEAD
-end=#
-=======
 end
->>>>>>> 76fb20ed44d335e01942e4fa55847b803b4c1ee3
