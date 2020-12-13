@@ -42,10 +42,10 @@ function calculDistLatLong(stations::Vector{Station})
 	end
     return distStations
 end
-
+#=
 function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5)
     allStation = getStations("stations.dat")
-    distStation = calculDistLatLong(allStations) /
+    distStation = calculDistLatLong(allStations)
     
     # Landreau, Cousteau, Perray, ZI1Garde, Lycee, Carquefou-Gare et Carquefou-Centre
     indActualStation = [1, 2, 3 ,4 ,7, 9, 12]
@@ -90,16 +90,13 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
     	while actualTime +  < requests[indReq].t
     		if indTimeStation > indDepStation
     			indTimeStation -= 1
-<<<<<<< HEAD
     
-=======
->>>>>>> 1b3504f3ca960e03ea869f24add2e8485ba09899
 end
-
+=#
 function jules()
-    e1 = Elt(2,false,10.,"e1",2)
-    s2 = Elt(3,true,10.,"s2",1)
-    e2 = Elt(4,false,10.,"e2",1)
+    e1 = Elt(2,false,20.,"e1",2)
+    s2 = Elt(3,true,20.,"s2",1)
+    e2 = Elt(4,false,20.,"e2",1)
     
     L = [e1,s2,e2]
 

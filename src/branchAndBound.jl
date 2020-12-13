@@ -7,16 +7,20 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64})
     dT = 0.
     lowerBound = getLowerBound(L)
 
-    root = newNode(passedElts,L,r,h,dT,lowerBound)
+    root = newNode(passedElts,L,lowerBound,r,h,dT,lowerBound)
 
     upperBound = Inf
 
     println("root = ",root)
 
+    println("")
     tuple = bestNode(root,upperBound)
 
     println("tuple = ",tuple)
 
+    aff(root)
+
+    println("")
     enBas = expendNode(tuple[1],upperBound,A,nbElts)
 
     println("enBas = ",enBas)
@@ -30,13 +34,28 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64})
     println("thridChild = ",root.children[3].e.name)
     println("")
 
+    println("")
     tuple = bestNode(root,upperBound)
 
     println("tuple[1] = ",tuple[1].e.name)
     println("tuple[2] = ",tuple[2])
 
-    println("             ")
+    aff(root)
 
+    println("")
+    enBas = expendNode(tuple[1],upperBound,A,nbElts)
+
+    println("enBas = ",enBas)
+
+    println("")
+    tuple = bestNode(root,upperBound)
+
+    println("tuple[1] = ",tuple[1].e.name)
+    println("tuple[2] = ",tuple[2])
+
+    aff(root)
+
+    println("")
     enBas = expendNode(tuple[1],upperBound,A,nbElts)
 
     println("enBas = ",enBas)
@@ -88,6 +107,7 @@ end
 # construit les enfants du noeud passé en paramètres
 function expendNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts::Int)
     println("expendNode[",node.e.name,"]")
+    println("futureElts = ",node.futureElts)
     node.children = Vector{Node}(undef,node.h)
     newUpperBound = Inf
     for indexChild in 1:length(node.futureElts) # parcours des éléments qui vont devenir les enfants de ce noeud
@@ -101,11 +121,13 @@ function expendNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts:
         println("dT = ",dT)
         println("node.lowerBound = ",node.lowerBound)
         println("e.cMin = ",e.cMin)
-        lowerBound = dT + node.lowerBound - e.cMin # borne inf de l'enfant
+        sumFutureCMin = node.sumFutureCMin - e.cMin
+        lowerBound = dT + sumFutureCMin # borne inf de l'enfant
         newUpperBound = min(upperBound,lowerBound)
         println("lowerBound = ",lowerBound)
         # vérification des contraintes w et epsilon
         if !(dT < e.limit) || lowerBound > upperBound # si l'enfant est au mieux plus mauvais que la borne sup connue
+            println("           [trop mauvais, supprimé]")
             node.children[indexChild] = emptyNode()
         else # l'enfant a une chance d'être meilleur que la borne sup connue
             # construction des attributs du nouvel enfant
@@ -117,10 +139,11 @@ function expendNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts:
             # on vérifie que l'élément est autorisé (pas de e1 avant s1 typiquement)
             authorized = isOrderRespected(node.futureElts,nbFutureElts+1,e)
             if authorized # le noeud a le droit d'être créé
+                println("           [autorisé]")
                 futureElts = newFutureElts(node.futureElts,nbFutureElts,indexChild) # elements suivants
-                node.children[indexChild] = newNode(passedElts,futureElts,e,node.h-1,dT,lowerBound) # création de l'enfant
+                node.children[indexChild] = newNode(passedElts,futureElts,sumFutureCMin,e,node.h-1,dT,lowerBound) # création de l'enfant
             else # le noeud n'a pas le droit d'être créé
-                println("non autorisé")
+                println("           [non autorisé]")
                 node.children[indexChild] = emptyNode()
             end
         end
@@ -179,4 +202,20 @@ function isOrderRespected(v::Vector{Elt},lengthV::Int,e::Elt)
         end
     end
     return true
+end
+
+# fonction d'affichage de l'arbre
+function printTree(root::Node;str::String="")
+    println(str,"noeud [",root.e.name,"]")
+    str = string(str,"   ")
+    for child in root.children
+        println("[",root.e.name,"]")
+        printTree(child,str=str)
+    end
+end
+
+function aff(root::Node)
+    println("\nprintTree :")
+    printTree(root)
+    println("")
 end

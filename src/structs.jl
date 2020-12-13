@@ -42,8 +42,6 @@ struct Request
     arrivalStation::String
 end
 
-##############################
-
 struct Elt
     id::Int
     isSource::Bool
@@ -56,6 +54,7 @@ mutable struct Node
     empty::Bool
     passedElts::Vector{Elt}
     futureElts::Vector{Elt}
+    sumFutureCMin::Float64
     e::Elt
     h::Int
     dT::Float64
@@ -71,12 +70,12 @@ function emptyNode()
     passedElts = Vector{Elt}(undef,0)
     futureElts = Vector{Elt}(undef,0)
     children= Vector{Node}(undef,0)
-    return Node(true,passedElts,futureElts,emptyElt(),0,0.,0.,children)
+    return Node(true,passedElts,futureElts,0.,emptyElt(),0,0.,0.,children)
 end
 
-function newNode(passedElts::Vector{Elt},futureElts::Vector{Elt},e::Elt,h::Int,dT::Float64,lowerBound::Float64)
+function newNode(passedElts::Vector{Elt},futureElts::Vector{Elt},sumFutureCMin::Float64,e::Elt,h::Int,dT::Float64,lowerBound::Float64)
     children = Vector{Node}(undef,0)
-    return Node(false,passedElts,futureElts,e,h,dT,lowerBound,children)
+    return Node(false,passedElts,futureElts,sumFutureCMin,e,h,dT,lowerBound,children)
 end
 
 #=Base.show(io::IO, n::Node) = print(io, n.nom," -> ",n.children)
@@ -89,4 +88,4 @@ function Base.show(io::IO, t::Array{Node,1})
         end
     end
     print(io, ")")
-end
+end=#
