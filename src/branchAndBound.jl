@@ -23,6 +23,7 @@ function branchAndBoundBis(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
         if bestNode == false # plus de noeuds à explorer
             finished = true # on s'arrête
         else # on va explorer le noeud et refaire un tour
+            println("bestNode = ",bestNode.e.name," -> lowerBound = ",lowerBound)
             aff(root)
             exit()
             println("")
@@ -44,8 +45,10 @@ end
 function bestNodeToExploreBis(root,upperBound)
     if root.probed || root.empty # pas actif donc pas intéressant
         return root,Inf
-    elseif length(root.children) == 0 # pas d'enfants, on retourne sa borne inf
+    elseif length(root.children) == 0 && root.h > 0 # pas d'enfants, on retourne sa borne inf
         return root,root.lowerBound
+    elseif length(root.children) == 0 && root.h == 0
+        return root,Inf
     else # il a des enfants !
         childMin = 0
         min = Inf
@@ -68,6 +71,48 @@ function bestNodeToExploreBis(root,upperBound)
             childMin,min # on retourne le meilleur noeud issue de la recherche sur cet enfant
         end
     end
+end
+
+# PRECONDITION : Ce noeud est valide est c'est le meilleur à explorer
+function exploreNodeBis(root::Node, upperBound::Float64, A::Matrix{Float64}, nbElts::Int, epsilon::Float64)
+    floor = false
+    nbChildren = root.h
+    root.children = Vector{Node}(undef,nbChildren)
+    if root.h == 2
+        floor = true
+        newUpperBound = Inf
+        newOptNode = 0
+        for indexChild in 1:nbChildren
+            # on construit le noeud enfant
+            root.children[indexChild] = newChild(root,indexChild,A)
+            # on récupère l'enfant pour construire son enfant unique
+            child = root.children[indexChild]
+            child.children = Vector{Node}(undef,1)
+            # on construit le noeud enfant
+            child.children[1] = newChild(child,1,A) # dernier noeud au sol
+            lowerBoundFloor = child.children[1].lowerBound # on récupère sa lowerBound (qui est sa dT réelle)
+            if lowerBoundFloor < newUpperBound # si on obtient une meilleure borne sup
+                newUpperBound = lowerBoundFloor # on met à jour la borne sup
+                newOptNode = child.children[1] # on met à jour le meilleur noeud
+            end
+        end
+    else
+
+
+    end
+end
+
+function newChild(root::Node,indexChild::Int,A::Matrix{Float64})
+    e = root.futureElts[indexChild] # élement du noeud enfant
+    d = A[root.e.id,e.id] # distance entre le noeud root et le noeud enfant
+    dT = root.dT + d # distance du noeud enfant à la racine
+    sumFutureCMin = root.sumFutureCMin - e.cMin # somme des distances min des éléments du noeud enfant
+    lowerBound = dT + sumFutureCMin # borne inf du noeud enfant
+    passedElts = newPassedElts(root.passedElts,root.e)
+    passedDT = newPassedDT(root)
+    futureElts = newFutureElts(futureElts,length(futureElts)-1,indexChild)
+    # on construit le noeud enfant
+    return newNode(passedElts,passedDT,futureElts,sumFutureCMin,e,root.h-1,dT,lowerBound)
 end
 
 function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
