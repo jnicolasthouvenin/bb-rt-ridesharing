@@ -12,12 +12,12 @@ const SafeFloat64 = Union{Missing, Float64}
 
 @enum Etat S R E Non
 
-include("structs.jl")
+#include("structs.jl")
 include("dataManager.jl")
 include("branchAndBound.jl")
 include("tools.jl")
 
-#=
+
 function formul(lat1::Float64, long1::Float64, lat2::Float64, long2::Float64)
     r = 6371008
     distAng = acos( sin(lat1 * pi/180) * sin(lat2 * pi/180) + cos(lat1 * pi/180) * cos(lat2 * pi/180) * cos((long1 - long2)*pi/180) )
@@ -55,9 +55,9 @@ end
 
 function calcLimit(elt::Elt, w::Float64, epsilon::Float64, tripDate::Array{Float64, 2}, indReq::Int, distStation::Array{Float64, 2}, dictActualStation::Dict{String, Station}, requests::Vector{Request})
 	if elt.state == S
-		return w + tripDate[elt.idReq, 1] - tripDate[indReq, 1]
+		return w - tripDate[indReq, 1] + tripDate[elt.idReq, 1]
 	elseif elt.state == E && tripDate[elt.idReq, 2] != -1.
-		return (1+eps)*distStation[dictActualStation[requests[elt.idReq].departureStation].id, dictActualStation[requests[elt.idReq].arrivalStation].id] + tripDate[elt.idReq, 2]
+		return (1+epsilon)*distStation[dictActualStation[requests[elt.idReq].departureStation].id, dictActualStation[requests[elt.idReq].arrivalStation].id] + requests[indReq].t - tripDate[elt.idReq, 2]
 	elseif elt.state == E
 		return -1
 	else
@@ -65,9 +65,22 @@ function calcLimit(elt::Elt, w::Float64, epsilon::Float64, tripDate::Array{Float
 	end		
 end
 
-function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5)
+function calcCMin(matTime::Array{Float64, 2}, iter::Int)
+	mini = Inf
+	taille = size(matTime)[1]
+	for ind = 1:taille
+		if ind != iter+1
+			if mini > matTime[iter+1, ind]
+				mini = matTime[iter+1, ind]
+			end
+		end
+	end
+	return mini
+end
+
+function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5)
     allStation = getStations("stations.dat")
-    distStation = calculDistLatLong(allStations) / SPEED_VEHICLE
+    distStation = calculDistLatLong(allStation) / SPEED_VEHICLE
     
     # Landreau, Cousteau, Perray, ZI1Garde, Lycee, Carquefou-Gare et Carquefou-Centre
     indActualStation = [1, 2, 3 ,4 ,7, 9, 12]
@@ -91,9 +104,9 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
     #= Pour une navette pour le moment =#
     iterFinTrip = 3
     trip = Vector{Elt}(undef, 3*nbRequests) 										# Liste du trip pour une navette
-    trip[1] = Elt(1, R, 1, false, "r1", 0.)											# On fixe la première demande au début du trip de la première navette
-    trip[2] = Elt(2, S, 1, false, "s1", 0.) 									
-    trip[3] = Elt(3, E, 1, false, "e1", 0.)
+    trip[1] = Elt(1, R, 1, false, false, 0., "r1", 0.)									# On fixe la première demande au début du trip de la première navette
+    trip[2] = Elt(2, S, 1, false, false, 0., "s1", 0.) 									
+    trip[3] = Elt(3, E, 1, false, true, 0., "e1", 0.)
     #First request assigned to the first shuttle
     
     tripDate[1] = requests[1].t
@@ -115,8 +128,10 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
     	trajTime = 0
     	if  indTimeStation > indNextStation
     		trajTime = distStation[indTimeStation, (indTimeStation-1)]
+    		stopStation = (indTimeStation, indTimeStation-1)
     	elseif indTimeStation < indNextStation
     		trajTime = distStation[indTimeStation, (indTimeStation+1)]
+			stopStation = (indTimeStation, indTimeStation+1)
     	else
     		trajTime = 0
     	end
@@ -126,12 +141,19 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
 			while actualTime + trajTime < requests[indReq].t && iterTrip <= iterFinTrip && indTimeStation != indNextStation
 				
 				actualTime += trajTime
-				indTimeStation = eval( quote (indTimeStation > indNextStation ? :+ : :-)(indTimeStation, 1) end)
+				
+				if indTimeStation > indNextStation
+					indTimeStation -= 1
+				else
+					indTimeStation += 1
+				end
 				
 				if indTimeStation > indNextStation
 					trajTime = distStation[indTimeStation, (indTimeStation-1)]
+					stopStation = (indTimeStation, indTimeStation-1)
 				elseif indTimeStation < indNextStation
 					trajTime = distStation[indTimeStation, (indTimeStation+1)]
+					stopStation = (indTimeStation, indTimeStation+1)
 				else
 					trajTime = 0
 				end
@@ -143,43 +165,52 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
 			
 				iterTrip += 1
 				
-				if trip[iterTrip].state == S
-					indNextStation = dictActualStation[requests[trip[iterTrip].idReq].departureStation].id
-				elseif trip[iterTrip].state == E
-					indNextStation = dictActualStation[requests[trip[iterTrip].idReq].arrivalStation].id
-				else
-					error("Tu essayes d'aller sur un sommet R ?!")
-				end
-				
-				if  indTimeStation > indNextStation
-					trajTime = distStation[indTimeStation, (indTimeStation-1)]
-					stopStation = (indTimeStation, indTimeStation-1)
-				elseif indTimeStation < indNextStation
-					trajTime = distStation[indTimeStation, (indTimeStation+1)]
-					stopStation = (indTimeStation, indTimeStation+1)
-				else
-					trajTime = 0
+				if iterTrip <= iterFinTrip
+					if trip[iterTrip].state == S
+						indNextStation = dictActualStation[requests[trip[iterTrip].idReq].departureStation].id
+					elseif trip[iterTrip].state == E
+						indNextStation = dictActualStation[requests[trip[iterTrip].idReq].arrivalStation].id
+					else
+						error("Tu essayes d'aller sur un sommet R ?!")
+					end
+					
+					if  indTimeStation > indNextStation
+						trajTime = distStation[indTimeStation, (indTimeStation-1)]
+						stopStation = (indTimeStation, indTimeStation-1)
+					elseif indTimeStation < indNextStation
+						trajTime = distStation[indTimeStation, (indTimeStation+1)]
+						stopStation = (indTimeStation, indTimeStation+1)
+					else
+						trajTime = 0
+					end
 				end
 			end
 		end
 		
 		if iterTrip > iterFinTrip
 			actualTime = requests[indReq].t
+			trajTime = 0
+			stopStation = (indTimeStation, indTimeStation)
 		end
+		timeLeft = (actualTime + trajTime) - requests[indReq].t 
+		
+		tripDate[indReq, 1] = requests[indReq].t
+		
 		iterFinTrip += 1
-		trip[iterFinTrip] = Elt(iterFinTrip, S, indReq, false, 0., "s$indReq", 0.)
+		trip[iterFinTrip] = Elt(iterFinTrip, S, indReq, false, false, 0., "s$indReq", 0.)
 		iterFinTrip += 1
-		trip[iterFinTrip] = Elt(iterFinTrip, E, indReq, false, 0., "e$indReq", 0.)
+		trip[iterFinTrip] = Elt(iterFinTrip, E, indReq, false, true, 0., "e$indReq", 0.)
 		
 		listEltTri = sort(trip[iterTrip:iterFinTrip], lt = myIsLess)
 		
-		listIndEltPasFini = [dictActualStation[nameStat].id for nameStat in [elt.state == S ? requests[elt.idReq].departureStation : requests[elt.idReq].departureStation for elt in listEltTri]]
+		listIndEltPasFini = [dictActualStation[nameStat].id for nameStat in [elt.state == S ? requests[elt.idReq].departureStation : requests[elt.idReq].arrivalStation for elt in listEltTri]]
 		
 		matTime = Array{Float64, 2}(undef, iterFinTrip-iterTrip+2, iterFinTrip-iterTrip+2)
+		
 		matTime[2:end, 2:end] = distStation[listIndEltPasFini, listIndEltPasFini]
 		for iter =  2:(iterFinTrip-iterTrip+2)
-			iterStat = listIndEltPasFini[iter]
-			val = min(distStation[stopStation[1], iterStat], distStation[stopStation[2], iterStat])
+			iterStat = listIndEltPasFini[iter-1]
+			val = min((requests[indReq].t - actualTime) + distStation[stopStation[1], iterStat], trajTime + distStation[stopStation[2], iterStat] - (requests[indReq].t - actualTime))
 			matTime[iter, 1] = val
 			matTime[1, iter] = val
 		end
@@ -190,18 +221,19 @@ function main(nameFirstStation::String = "Carquefou-Gare", w::Float64 = 15*60., 
 		listElt = Vector{Elt}(undef, iterFinTrip-iterTrip+1)
 		for iter = 1:(iterFinTrip-iterTrip+1)
 			elt = listEltTri[iter]
-			listElt[iter] = Elt(elt.id, elt.state, elt.idReq, elt.isSource, calcLimit(elt, w, epsilon, tripDate, indReq, distStation, dictActualStation, requests) , elt.name, minimum(matTime[iter, 1:end]))
+			listElt[iter] = Elt(iter, elt.state, elt.idReq, elt.isSource, (elt.state == E && tripDate[elt.idReq, 2] == -1), calcLimit(elt, w, epsilon, tripDate, indReq, distStation, dictActualStation, requests), elt.name, calcCMin(matTime, iter))
 		end
 		
-		timeLeft = requests[indReq].t - (actualTime + trajTime)
+		#println(listElt)
 		
-		println(listElt)
-		println(matTime)
-		
-		#branchAndBound(listElt, matTime)
-	#end
+		#println(tripDate[1, 2])	
+		branchAndBound(listElt, matTime, epsilon)
+		return listElt, matTime, tripDate
+		# Recup Next Station
+		# Se mettre au bon temps grace à matTime
+		# Et on recommence en les ajoutant au Trip
+	#end	
 end
-=#
 function jules()
     e1 = Elt(2,E,1,false,false,1000.,"e1",2)
     s2 = Elt(3,S,2,true,false,1000.,"s2",1)
