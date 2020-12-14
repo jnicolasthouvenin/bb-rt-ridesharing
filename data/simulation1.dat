@@ -1,15 +1,15 @@
 1
 10
-100 ZI1Garde Landereau
-700 Carque-Gare Cousteau
+100 ZI1Garde Landreau
+400 Gare Cousteau
 1500 Perray Lycée
-2000 Lycée Carquefou-Centre
-2600 Carquefou-Gare Carquefou-entre
-3250 Landereau Lycée
+2000 Lycée Centre
+2600 Gare Centre
+3250 Landreau Lycée
 4150 ZI1Garde Perray
-5000 Cousteau Carquefou-Gare
-5400 Perray Landereau
-6100 Carquefou-Centre Landereau
+5000 Cousteau Gare
+5400 Perray Landreau
+6100 Centre Landreau
 
 1: nombre de navettes-nbShuttles
 3: nombre de requetes
