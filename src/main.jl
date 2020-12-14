@@ -231,7 +231,7 @@ function jules()
     ]
 
     #branchAndBound(L,A)
-    branchAndBound(L,A,100.)
+    branchAndBoundBis(L,A,100.)
 
     println("end")
 end

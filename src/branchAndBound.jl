@@ -1,4 +1,116 @@
 
+function branchAndBoundBis(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
+    # initialisation de l'arbre
+    r = Elt(1,R,2,false,false,0.,"r",0.) # création de l'élément racine
+    passedElts = Vector{Elt}(undef,0)
+    passedDT = Vector{Float64}(undef,0)
+    h = length(L)
+    nbElts = length(L)
+    dT = 0.
+    lowerBound = getLowerBound(L)
+    upperBound = Inf
+    # Creation de la racine de l'arbre
+    root = newNode(passedElts,passedDT,L,lowerBound,r,h,dT,lowerBound)
+    # descente récursive dans l'arbre
+    finished = false
+    lastBestNode = 0
+    while !finished && debug > 0
+        println("while")
+        debug -= 1
+        println("")
+        # On calcule le meilleur noeud à explorer de l'arbre. Si le noeud retourné vaux faux c'est qu'il n'y a plus de noeuds à explorer
+        bestNode,lowerBound = bestNodeToExploreBis(root,upperBound)
+        if bestNode == false # plus de noeuds à explorer
+            finished = true # on s'arrête
+        else # on va explorer le noeud et refaire un tour
+            aff(root)
+            exit()
+            println("")
+            notFloor = exploreNodeBis(bestNode,upperBound,A,nbElts,epsilon) # on explore le meilleur noeud à explorer
+            # notFloor est sensé valoir true sauf si on a atteint le bas de l'arbre
+            if notFloor != true # on a atteint le bas de l'arbre
+                if notFloor[2] < upperBound # si la valeur du noeud en bas est meilleure que la borne sup actuelle
+                    upperBound = notFloor[2]
+                    lastBestNode = notFloor[1]
+                    println("MEILLEUR NOEUD FINAL -> ",notFloor[1].e.name)
+                end
+            end
+        end
+    end
+    aff(root)
+    println("upperBound = ",upperBound)
+end
+
+function bestNodeToExploreBis(root,upperBound)
+    if root.probed || root.empty # pas actif donc pas intéressant
+        return root,Inf
+    elseif length(root.children) == 0 # pas d'enfants, on retourne sa borne inf
+        return root,root.lowerBound
+    else # il a des enfants !
+        childMin = 0
+        min = Inf
+        for indexChild in 1:length(root.children) # parcours des enfants de root
+            child = root.children[indexChild]
+            if child.lowerBound > upperBound # l'enfant est trop mauvais
+                root.children[indexChild] = emptyNode() # on le supprime
+            else # l'enfant a des chances de survivre
+                bestNode,lowerBound = bestNodeToExplore(child,upperBound)
+                if lowerBound < min
+                    min = lowerBound
+                    childMin = bestNode
+                end
+            end
+        end
+        if min == inf # tous les enfants sont soient supprimés soit sondés
+            root.probed = true
+            return root, Inf
+        else # un des enfants est non sondé
+            childMin,min # on retourne le meilleur noeud issue de la recherche sur cet enfant
+        end
+    end
+end
+
+function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
+    println("branchAndBound.jl")
+    # initialisation de l'arbre
+    r = Elt(1,R,2,false,false,0.,"r",0.) # création de l'élément racine
+    passedElts = Vector{Elt}(undef,0)
+    passedDT = Vector{Float64}(undef,0)
+    h = length(L)
+    nbElts = length(L)
+    dT = 0.
+    lowerBound = getLowerBound(L)
+    upperBound = Inf
+    # Creation de la racine de l'arbre
+    root = newNode(passedElts,passedDT,L,lowerBound,r,h,dT,lowerBound)
+    # descente récursive dans l'arbre
+    finished = false
+    lastBestNode = 0
+    while !finished && debug > 0
+        println("while")
+        debug -= 1
+        println("")
+        # On calcule le meilleur noeud à explorer de l'arbre. Si le noeud retourné vaux faux c'est qu'il n'y a plus de noeuds à explorer
+        tuple = bestNodeToExplore(root,upperBound)
+        if tuple[1] == false # plus de noeuds à explorer
+            finished = true # on s'arrête
+        else # on va explorer le noeud et refaire un tour
+            aff(root)
+            println("")
+            enBas = exploreNode(tuple[1],upperBound,A,nbElts,epsilon) # on explore le meilleur noeud à explorer
+            # enBas est sensé valoir true sauf si on a atteint le bas de l'arbre
+            if enBas != true # on a atteint le bas de l'arbre
+                if enBas[2] < upperBound # si la valeur du noeud en bas est meilleure que la borne sup actuelle
+                    upperBound = enBas[2]
+                    lastBestNode = enBas[1]
+                    println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
+                end
+            end
+        end
+    end
+    aff(root)
+    println("upperBound = ",upperBound)
+end
 
 function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
     println("branchAndBound.jl")
@@ -249,11 +361,17 @@ end
 
 # fonction d'affichage de l'arbre
 function printTree(root::Node;str::String="")
-    println(str,"noeud [",root.e.name," - (",root.dT,",",root.lowerBound,")]")
-    str = string(str,"      ")
-    for child in root.children
-        println("[",root.e.name,"]")
-        printTree(child,str=str)
+    if root.probed
+        println(str,"PROBED")
+    elseif root.empty
+        println(str,"DELETED")
+    else
+        println(str,"noeud [",root.e.name," - (",root.dT,",",root.lowerBound,")]")
+        str = string(str,"      ")
+        for child in root.children
+            println("[",root.e.name,"]")
+            printTree(child,str=str)
+        end
     end
 end
 

@@ -42,16 +42,17 @@ struct Elt
 end
 
 mutable struct Node
-    empty::Bool
-    passedElts::Vector{Elt}
-    passedDT::Vector{Float64}
-    futureElts::Vector{Elt}
-    sumFutureCMin::Float64
-    e::Elt
-    h::Int
-    dT::Float64
-    lowerBound::Float64
-    children::Vector{Node}
+    empty::Bool # si le noeud est supprimé
+    probed::Bool # si le noeud est sondé (que tous ses enfants sont sondés ou qu'il ne peut plus posséder d'enfants)
+    passedElts::Vector{Elt} # éléments passés triés dans l'ordre de parcours
+    passedDT::Vector{Float64} # dT passés correspondant aux temps des éléments passés
+    futureElts::Vector{Elt} # éléments futures non triés
+    sumFutureCMin::Float64 # somme des CMin des éléments futures
+    e::Elt # élément du noeud
+    h::Int # hauteur du noeud
+    dT::Float64 # distance du noeud à la racine
+    lowerBound::Float64 # plus petite distance trouvée en développant ce noeud
+    children::Vector{Node} # noeuds enfants de ce noeud
 end
 
 function emptyElt()
@@ -61,12 +62,12 @@ end
 function emptyNode()
     passedElts = Vector{Elt}(undef,0)
     children= Vector{Node}(undef,0)
-    return Node(true,passedElts,Vector{Float64}(undef,0),passedElts,0.,emptyElt(),0,0.,0.,children)
+    return Node(true,true,passedElts,Vector{Float64}(undef,0),passedElts,0.,emptyElt(),0,0.,0.,children)
 end
 
 function newNode(passedElts::Vector{Elt},passedDT::Vector{Float64},futureElts::Vector{Elt},sumFutureCMin::Float64,e::Elt,h::Int,dT::Float64,lowerBound::Float64)
     children = Vector{Node}(undef,0)
-    return Node(false,passedElts,passedDT,futureElts,sumFutureCMin,e,h,dT,lowerBound,children)
+    return Node(false,false,passedElts,passedDT,futureElts,sumFutureCMin,e,h,dT,lowerBound,children)
 end
 
 #=Base.show(io::IO, n::Node) = print(io, n.nom," -> ",n.children)
