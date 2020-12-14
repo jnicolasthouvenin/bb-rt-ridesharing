@@ -12,7 +12,7 @@ const SafeFloat64 = Union{Missing, Float64}
 
 @enum Etat S R E Non
 
-include("structs.jl")
+#include("structs.jl")
 include("dataManager.jl")
 include("branchAndBound.jl")
 include("tools.jl")
@@ -55,14 +55,27 @@ end
 
 function calcLimit(elt::Elt, w::Float64, epsilon::Float64, tripDate::Array{Float64, 2}, indReq::Int, distStation::Array{Float64, 2}, dictActualStation::Dict{String, Station}, requests::Vector{Request})
 	if elt.state == S
-		return w + tripDate[elt.idReq, 1] - tripDate[indReq, 1]
+		return w - tripDate[indReq, 1] + tripDate[elt.idReq, 1]
 	elseif elt.state == E && tripDate[elt.idReq, 2] != -1.
-		return (1+epsilon)*distStation[dictActualStation[requests[elt.idReq].departureStation].id, dictActualStation[requests[elt.idReq].arrivalStation].id] + tripDate[elt.idReq, 2]
+		return (1+epsilon)*distStation[dictActualStation[requests[elt.idReq].departureStation].id, dictActualStation[requests[elt.idReq].arrivalStation].id] + requests[indReq].t - tripDate[elt.idReq, 2]
 	elseif elt.state == E
 		return -1
 	else
 		error("La tu essayes de calculer la limite d'un element R")
 	end		
+end
+
+function calcCMin(matTime::Array{Float64, 2}, iter::Int)
+	mini = Inf
+	taille = size(matTime)[1]
+	for ind = 1:taille
+		if ind != iter+1
+			if mini > matTime[iter+1, ind]
+				mini = matTime[iter+1, ind]
+			end
+		end
+	end
+	return mini
 end
 
 function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5)
@@ -115,8 +128,10 @@ function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::F
     	trajTime = 0
     	if  indTimeStation > indNextStation
     		trajTime = distStation[indTimeStation, (indTimeStation-1)]
+    		stopStation = (indTimeStation, indTimeStation-1)
     	elseif indTimeStation < indNextStation
     		trajTime = distStation[indTimeStation, (indTimeStation+1)]
+			stopStation = (indTimeStation, indTimeStation+1)
     	else
     		trajTime = 0
     	end
@@ -135,8 +150,10 @@ function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::F
 				
 				if indTimeStation > indNextStation
 					trajTime = distStation[indTimeStation, (indTimeStation-1)]
+					stopStation = (indTimeStation, indTimeStation-1)
 				elseif indTimeStation < indNextStation
 					trajTime = distStation[indTimeStation, (indTimeStation+1)]
+					stopStation = (indTimeStation, indTimeStation+1)
 				else
 					trajTime = 0
 				end
@@ -177,6 +194,8 @@ function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::F
 		end
 		timeLeft = (actualTime + trajTime) - requests[indReq].t 
 		
+		tripDate[indReq, 1] = requests[indReq].t
+		
 		iterFinTrip += 1
 		trip[iterFinTrip] = Elt(iterFinTrip, S, indReq, false, false, 0., "s$indReq", 0.)
 		iterFinTrip += 1
@@ -187,7 +206,7 @@ function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::F
 		listIndEltPasFini = [dictActualStation[nameStat].id for nameStat in [elt.state == S ? requests[elt.idReq].departureStation : requests[elt.idReq].arrivalStation for elt in listEltTri]]
 		
 		matTime = Array{Float64, 2}(undef, iterFinTrip-iterTrip+2, iterFinTrip-iterTrip+2)
-		println(listEltTri)
+		
 		matTime[2:end, 2:end] = distStation[listIndEltPasFini, listIndEltPasFini]
 		for iter =  2:(iterFinTrip-iterTrip+2)
 			iterStat = listIndEltPasFini[iter-1]
@@ -202,14 +221,14 @@ function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::F
 		listElt = Vector{Elt}(undef, iterFinTrip-iterTrip+1)
 		for iter = 1:(iterFinTrip-iterTrip+1)
 			elt = listEltTri[iter]
-			listElt[iter] = Elt(elt.id, elt.state, elt.idReq, elt.isSource, (elt.state == E && tripDate[elt.idReq, 2] == -1), calcLimit(elt, w, epsilon, tripDate, indReq, distStation, dictActualStation, requests), elt.name, minimum(matTime[iter, 1:end]))
+			listElt[iter] = Elt(iter, elt.state, elt.idReq, elt.isSource, (elt.state == E && tripDate[elt.idReq, 2] == -1), calcLimit(elt, w, epsilon, tripDate, indReq, distStation, dictActualStation, requests), elt.name, calcCMin(matTime, iter))
 		end
 		
+		#println(listElt)
+		
+		#println(tripDate[1, 2])	
+		branchAndBound(listElt, matTime, epsilon)
 		return listElt, matTime, tripDate
-		
-		#branchAndBound(listElt, matTime)
-		tripDate[indReq, 1] = request[indReq].t
-		
 		# Recup Next Station
 		# Se mettre au bon temps grace à matTime
 		# Et on recommence en les ajoutant au Trip
