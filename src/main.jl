@@ -78,7 +78,8 @@ function calcCMin(matTime::Array{Float64, 2}, iter::Int)
 	return mini
 end
 
-function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5)
+function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5)
+	# On récupère toutes les données relatives au problème
     allStation = getStations("stations.dat")
     distStation = calculDistLatLong(allStation) / SPEED_VEHICLE
     
@@ -88,7 +89,7 @@ function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::F
     actualStation = allStation[indActualStation]									# Les stations utilisées
     dictActualStation = Dict(station.name => station for station in actualStation) 	# Dictionnaire pour avoir les stations depuis leur nom					
     actualDistance = distStation[indActualStation, indActualStation]				# La distance entre ces stations
-    requests, nbShuttles = parseRequests("simulation1.dat")							# On récupère la liste des requètes
+    requests, nbShuttles = parseRequests(nameSimul)							# On récupère la liste des requètes
     nbRequests = length(requests)													# Calcul du nombre de requete
     
     tripDate = Array{Float64, 2}(undef, nbRequests, 3)								# Matrice qui retiendra le temps de reception d'une demande, de la
@@ -114,7 +115,7 @@ function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::F
     stopStation = (-1, -1)
     
     indReq = 2
-    #for indReq in 2:nbRequests
+    for indReq in 2:nbRequests
     
     	if trip[iterTrip].state == S
     		indNextStation = dictActualStation[requests[trip[iterTrip].idReq].departureStation].id
@@ -227,12 +228,23 @@ function main(nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::F
 		#println(listElt)
 		
 		#println(tripDate[1, 2])	
-		branchAndBound(listElt, matTime, epsilon)
-		return listElt, matTime, tripDate
+		listNextElt = branchAndBound(listElt, matTime, epsilon)
+		
+		trip[iterTrip] = Elt(iterFinTrip, R, indReq, false, false, 0., "r$indReq", 0.)
+		for iter = (iterTrip+1):(iterFinTrip+1)
+			elt = listNextElt[iter-iterTrip]
+			trip[iter] = Elt(iter, elt.state, elt.idReq, false, false, 0., elt.name, 0.)
+		end
+		
+		iterFinTrip += 3
+		iterTrip += 1
+		
 		# Recup Next Station
 		# Se mettre au bon temps grace à matTime
 		# Et on recommence en les ajoutant au Trip
-	#end	
+	end	
+	
+	return trip
 end
 
 =#
