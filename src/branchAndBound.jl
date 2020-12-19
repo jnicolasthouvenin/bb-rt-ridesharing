@@ -197,6 +197,7 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
     end
     aff(root)
     println("upperBound = ",upperBound)
+    return lastBestNode.passedElts, lastBestNode.e
 end
 
 # retourne le meilleur noeud à explorer ainsi que sa lowerBound, si le return vaut false,false c'est qu'aucun noeud ne reste à explorer
@@ -262,8 +263,8 @@ function exploreNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts
         lowerBound = dT + sumFutureCMin # borne inf de l'enfant
         println("lowerBound = ",lowerBound)
         # vérification des contraintes w et epsilon
-        
-        if !(dT < e.limit) || lowerBound > upperBound # si l'enfant est au mieux plus mauvais que la borne sup connue
+        println("\n dT : $dT et Limite : $(e.limit)\n")
+        if ((dT > e.limit) && (e.limit != -1.)) || lowerBound > upperBound # si l'enfant est au mieux plus mauvais que la borne sup connue
             println("           [impossible ou trop mauvais, supprimé]")
             node.children[indexChild] = emptyNode()
         else # l'enfant a une chance d'être meilleur que la borne sup connue
@@ -277,6 +278,7 @@ function exploreNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts
             authorized = isOrderRespected(node.futureElts,nbFutureElts+1,e)
             if authorized # le noeud a le droit d'être créé
                 timeOK = true
+                println("$(e.name) : Client non récupéré $(e.sourceRemaining)")
                 if e.state == E && e.sourceRemaining
                     println("[-----------------------------------]")
                     println("e.nom = ",e.name)
