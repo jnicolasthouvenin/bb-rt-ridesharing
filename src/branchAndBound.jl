@@ -96,9 +96,6 @@ function exploreNodeBis(root::Node, upperBound::Float64, A::Matrix{Float64}, nbE
                 newOptNode = child.children[1] # on met à jour le meilleur noeud
             end
         end
-    else
-
-
     end
 end
 
