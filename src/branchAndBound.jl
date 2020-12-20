@@ -96,9 +96,6 @@ function exploreNodeBis(root::Node, upperBound::Float64, A::Matrix{Float64}, nbE
                 newOptNode = child.children[1] # on met à jour le meilleur noeud
             end
         end
-    else
-
-
     end
 end
 
@@ -158,7 +155,6 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
 end
 
 function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
-    println("branchAndBound.jl")
     # initialisation de l'arbre
     r = Elt(1,R,2,false,false,0.,"r",0.) # création de l'élément racine
     passedElts = Vector{Elt}(undef,0)
@@ -174,9 +170,7 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
     finished = false
     lastBestNode = 0
     while !finished && debug > 0
-        println("while")
         debug -= 1
-        println("")
         # On calcule le meilleur noeud à explorer de l'arbre. Si le noeud retourné vaux faux c'est qu'il n'y a plus de noeuds à explorer
         tuple = bestNodeToExplore(root,upperBound)
         if tuple[1] == false # plus de noeuds à explorer
@@ -246,52 +240,34 @@ end
 # construit les enfants du noeud passé en paramètres
 function exploreNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts::Int, epsilon::Float64)
     println("exploreNode[",node.e.name," - (",node.dT,",",node.lowerBound,")]")
-    println("futureElts")
-    affElts(node.futureElts)
-    println("passedDT = ",node.passedDT)
     node.children = Vector{Node}(undef,node.h) # on alloue le vecteur des enfants de ce noeud
     newUpperBound = Inf
     newOptNode = 0
     for indexChild in 1:length(node.futureElts) # parcours des éléments qui vont devenir les enfants de ce noeud
         e = node.futureElts[indexChild] # élément courant
-        println("child : ",e.name)
-        println("isSource = ",e.isSource)
         # calcul de sa lowerBound
         d = A[node.e.id,e.id] # distance entre le noeud courant et l'enfant
-        println("d = ",d)
         dT = node.dT + d # distance parcourue depuis la racine
-        println("dT = ",dT)
-        println("node.lowerBound = ",node.lowerBound)
-        println("e.cMin = ",e.cMin)
         sumFutureCMin = node.sumFutureCMin - e.cMin
         lowerBound = dT + sumFutureCMin # borne inf de l'enfant
-        println("lowerBound = ",lowerBound)
         # vérification des contraintes w et epsilon
-        println("\n dT : $dT et Limite : $(e.limit)\n")
         if ((dT > e.limit) && (e.limit != -1.)) || lowerBound > upperBound # si l'enfant est au mieux plus mauvais que la borne sup connue
-            println("           [impossible ou trop mauvais, supprimé]")
             node.children[indexChild] = emptyNode()
         else # l'enfant a une chance d'être meilleur que la borne sup connue
             # construction des attributs du nouvel enfant
             nbFutureElts = node.h - 1 # nombre d'elts restants de l'enfant
-            println("nbFutureElts = ",nbFutureElts)
             nbPassedElts = nbElts - 1 - nbFutureElts # nombre d'elts précédents de l'enfant
-            println("nbPassedElts = ",nbPassedElts)
             passedElts = newPassedElts(node.passedElts,node.e)
             # on vérifie que l'élément est autorisé (pas de e1 avant s1 typiquement)
             authorized = isOrderRespected(node.futureElts,nbFutureElts+1,e)
             if authorized # le noeud a le droit d'être créé
                 timeOK = true
-                println("$(e.name) : Client non récupéré $(e.sourceRemaining)")
                 if e.state == E && e.sourceRemaining
-                    println("[-----------------------------------]")
-                    println("e.nom = ",e.name)
                     distance = 0
                     source = 0
                     if node.e.state == S && node.e.idReq == e.idReq # la source que l'on cherche est juste au dessus de notre noeud
                         source = node.e
                         distance = A[node.e.id,e.id]
-                        println("source trouvée")
                     else # source est contenue dans la liste des elts passés de node
                         sourceFound = false
                         indexElt = 1
@@ -300,7 +276,6 @@ function exploreNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts
                             dTBuffer = node.passedDT[indexElt]
                             if eltBuffer.state == S && eltBuffer.idReq == e.idReq # c'est la source !
                                 distance = node.dT + A[node.e.id,e.id] - dTBuffer
-                                println("source trouvée")
                                 sourceFound = true
                                 source = eltBuffer
                             end
@@ -312,19 +287,11 @@ function exploreNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts
                         end
                     end
                     if distance > (1+epsilon)*A[source.id,e.id] # la contrainte de trajet est respectée
-                        println("distance > (1+epsilon)*A[source.id,e.id]")
                         timeOK = false
-                    else
-                        println("distance < (1+epsilon)*A[source.id,e.id]")
                     end
-                    println("[-----------------------------------]")
                 end
                 if timeOK
-                    println("           [autorisé]")
                     futureElts = newFutureElts(node.futureElts,nbFutureElts,indexChild) # elements suivants
-                    println("indiceChild = ",indexChild)
-                    println("[futureElts !!!!!]")
-                    affElts(futureElts)
                     passedDT = newPassedDT(node)
                     node.children[indexChild] = newNode(passedElts,passedDT,futureElts,sumFutureCMin,e,node.h-1,dT,lowerBound) # création de l'enfant
                     if node.h == 1
@@ -334,11 +301,9 @@ function exploreNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts
                         end
                     end
                 else
-                    println("           [non autorisé]")
                     node.children[indexChild] = emptyNode()
                 end
             else # le noeud n'a pas le droit d'être créé
-                println("           [non autorisé]")
                 node.children[indexChild] = emptyNode()
             end
         end
@@ -391,18 +356,12 @@ end
 
 # vérifie que l'ordre des éléments dans le trajet est logique (pas de e1 avant s1)
 function isOrderRespected(v::Vector{Elt},lengthV::Int,e::Elt)
-    println("[isOrderRespected]")
-    println(e.name)
-    println(e.state)
     if e.state == S
         return true
     elseif e.state == E
         for indexElt in 1:lengthV # parcours des éléments
             otherE = v[indexElt]
-            println(otherE.name)
-            println(otherE.state)
             if otherE.state == S && otherE.idReq == e.idReq
-                println("CEST LUI QUI VA PAS")
                 return false
             end
         end
