@@ -197,7 +197,11 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
     end
     aff(root)
     println("upperBound = ",upperBound)
-    return lastBestNode.passedElts, lastBestNode.e
+    if lastBestNode != 0
+    	return lastBestNode.passedElts, lastBestNode.e
+    else
+    	return false, false
+    end
 end
 
 # retourne le meilleur noeud à explorer ainsi que sa lowerBound, si le return vaut false,false c'est qu'aucun noeud ne reste à explorer
