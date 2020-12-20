@@ -53,11 +53,11 @@ function calculDistLatLong(stations::Vector{Station})
     return distStations
 end
 
-function calcLimit(elt::Elt, w::Float64, epsilon::Float64, tripDate::Array{Float64, 2}, indReq::Int, distStation::Array{Float64, 2}, dictActualStation::Dict{String, Station}, requests::Vector{Request})
+function calcLimit(elt::Elt, w::Float64, epsilon::Float64, tripDate::Array{Float64, 2}, indReq::Int, distStation::Array{Float64, 2}, dictStation::Dict{String, Station}, requests::Vector{Request})
 	if elt.state == S
 		return w - tripDate[indReq, 1] + tripDate[elt.idReq, 1]
 	elseif elt.state == E && tripDate[elt.idReq, 2] != -1.
-		return (1+epsilon)*distStation[dictActualStation[requests[elt.idReq].departureStation].id, dictActualStation[requests[elt.idReq].arrivalStation].id] + requests[indReq].t - tripDate[elt.idReq, 2]
+		return (1+epsilon)*distStation[dictStation[requests[elt.idReq].departureStation].id, dictStation[requests[elt.idReq].arrivalStation].id] + requests[indReq].t - tripDate[elt.idReq, 2]
 	elseif elt.state == E
 		return -1
 	else
@@ -78,7 +78,7 @@ function calcCMin(matTime::Array{Float64, 2}, iter::Int)
 	return mini
 end
 
-function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5)
+function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5; verbose = false)
 	# On récupère toutes les données relatives au problème
     allStation = getStations("stations.dat")
     distStation = calculDistLatLong(allStation) / SPEED_VEHICLE
@@ -87,7 +87,7 @@ function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = 
     indActualStation = [1, 2, 3 ,4 ,7, 9, 12]
     
     actualStation = allStation[indActualStation]									# Les stations utilisées
-    dictActualStation = Dict(station.name => station for station in actualStation) 	# Dictionnaire pour avoir les stations depuis leur nom					
+    dictStation = Dict(station.name => station for station in allStation) 	# Dictionnaire pour avoir les stations depuis leur nom					
     actualDistance = distStation[indActualStation, indActualStation]				# La distance entre ces stations
     requests, nbShuttles = parseRequests(nameSimul)									# On récupère la liste des requètes
     nbRequests = length(requests)													# Calcul du nombre de requete
@@ -111,7 +111,7 @@ function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = 
     #First request assigned to the first shuttle
     
     tripDate[1] = requests[1].t
-    indTimeStation = dictActualStation[nameFirstStation].id
+    indTimeStation = dictStation[nameFirstStation].id
     stopStation = (-1, -1)
     trajTime = 0
     
@@ -119,9 +119,9 @@ function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = 
     for indReq in 2:nbRequests
     
     	if trip[iterTrip].state == S
-    		indNextStation = dictActualStation[requests[trip[iterTrip].idReq].departureStation].id
+    		indNextStation = dictStation[requests[trip[iterTrip].idReq].departureStation].id
     	elseif trip[iterTrip].state == E
-    		indNextStation = dictActualStation[requests[trip[iterTrip].idReq].arrivalStation].id
+    		indNextStation = dictStation[requests[trip[iterTrip].idReq].arrivalStation].id
     	else
     		error("Tu essayes d'aller sur un sommet R ?!")
     	end
@@ -185,9 +185,9 @@ function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = 
 				
 				if iterTrip <= iterFinTrip
 					if trip[iterTrip].state == S
-						indNextStation = dictActualStation[requests[trip[iterTrip].idReq].departureStation].id
+						indNextStation = dictStation[requests[trip[iterTrip].idReq].departureStation].id
 					elseif trip[iterTrip].state == E
-						indNextStation = dictActualStation[requests[trip[iterTrip].idReq].arrivalStation].id
+						indNextStation = dictStation[requests[trip[iterTrip].idReq].arrivalStation].id
 					else
 						error("Tu essayes d'aller sur un sommet R ?!")
 					end
@@ -213,7 +213,8 @@ function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = 
 		end
 		tripDate[indReq, 1] = requests[indReq].t
 		
-		
+		iterFinTripBis = iterFinTrip
+		tripBis = trip[1:end]
 		
 		
 		iterFinTrip += 1
@@ -223,7 +224,7 @@ function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = 
 		
 		listEltTri = sort(trip[iterTrip:iterFinTrip], lt = myIsLess)
 		
-		listIndEltPasFini = [dictActualStation[nameStat].id for nameStat in [elt.state == S ? requests[elt.idReq].departureStation : requests[elt.idReq].arrivalStation for elt in listEltTri]]
+		listIndEltPasFini = [dictStation[nameStat].id for nameStat in [elt.state == S ? requests[elt.idReq].departureStation : requests[elt.idReq].arrivalStation for elt in listEltTri]]
 		
 		matTime = Array{Float64, 2}(undef, iterFinTrip-iterTrip+2, iterFinTrip-iterTrip+2)
 		firstDest = Vector{Int}(undef, iterFinTrip-iterTrip+1)
@@ -321,10 +322,10 @@ function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = 
 		listElt = Vector{Elt}(undef, iterFinTrip-iterTrip+1)
 		for iter = 1:(iterFinTrip-iterTrip+1)
 			elt = listEltTri[iter]
-			listElt[iter] = Elt(iter+1, elt.state, elt.idReq, elt.isSource, (elt.state == E && tripDate[elt.idReq, 2] == -1), calcLimit(elt, w, epsilon, tripDate, indReq, distStation, dictActualStation, requests), elt.name, calcCMin(matTime, iter))
+			listElt[iter] = Elt(iter+1, elt.state, elt.idReq, elt.isSource, (elt.state == E && tripDate[elt.idReq, 2] == -1), calcLimit(elt, w, epsilon, tripDate, indReq, distStation, dictStation, requests), elt.name, calcCMin(matTime, iter))
 		end
 		
-		listNextElt, lastElt = branchAndBound(listElt, matTime, epsilon)
+		listNextElt, lastElt = branchAndBound(listElt, matTime, epsilon, verbose=verbose)
 		
 		if (listNextElt, lastElt) != (false, false)
 		
@@ -336,22 +337,35 @@ function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = 
 				elt = listNextElt[iter+1]
 				trip[iter + iterTrip] = Elt(iter+ iterTrip - 1, elt.state, elt.idReq, elt.isSource, false, 0., elt.name, 0.)
 			end
-			trip[iterFinTrip+1] = Elt(iterFinTrip+1, lastElt.state, lastElt.idReq, lastElt.isSource, false, 0., lastElt.name, 0.)
+			iterFinTrip += 1
+			trip[iterFinTrip] = Elt(iterFinTrip+1, lastElt.state, lastElt.idReq, lastElt.isSource, false, 0., lastElt.name, 0.)
 			
 			iterTrip += 1
 		else
 			println("Impossible d'accepter le client $indReq")
+			iterFinTrip = iterFinTripBis
+			trip = tripBis[1:end]
 		end
-		println(trip)
 		actualTime = requests[indReq].t
 		# Recup Next Station
 		# Se mettre au bon temps grace à matTime
 		# Et on recommence en les ajoutant au Trip
 	end	
 	
-	#=while iterTrip <= iterFinTrip
-		debStat = nothing
-	end=#
+	while iterTrip <= iterFinTrip
+		if length(indTimeStation) != 1
+			actualTime += trajTime
+			
+			indTimeStation = indTimeStation[1]
+		end
+		elt = trip[iterTrip]
+		nextStat = dictStation[elt.state == S ? requests[elt.idReq].departureStation : requests[elt.idReq].arrivalStation].id
+		actualTime += distStation[indTimeStation, nextStat]
+		
+		tripDate[trip[iterTrip].idReq, etatToInt[trip[iterTrip].state]] = actualTime
+		iterTrip += 1
+		indTimeStation = nextStat
+	end
 	return trip, tripDate
 end
 

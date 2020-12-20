@@ -154,7 +154,9 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
     println("upperBound = ",upperBound)
 end
 
-function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
+#Moi j'utilise que ca ! Si tu veux suppr le reste fais toi plaisir !
+
+function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf, verbose = false)
     # initialisation de l'arbre
     r = Elt(1,R,2,false,false,0.,"r",0.) # création de l'élément racine
     passedElts = Vector{Elt}(undef,0)
@@ -172,25 +174,25 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
     while !finished && debug > 0
         debug -= 1
         # On calcule le meilleur noeud à explorer de l'arbre. Si le noeud retourné vaux faux c'est qu'il n'y a plus de noeuds à explorer
-        tuple = bestNodeToExplore(root,upperBound)
+        tuple = bestNodeToExplore(root,upperBound, verbose=verbose)
         if tuple[1] == false # plus de noeuds à explorer
             finished = true # on s'arrête
         else # on va explorer le noeud et refaire un tour
             aff(root)
-            println("")
-            enBas = exploreNode(tuple[1],upperBound,A,nbElts,epsilon) # on explore le meilleur noeud à explorer
+            verbose && println("")
+            enBas = exploreNode(tuple[1],upperBound,A,nbElts,epsilon, verbose=verbose) # on explore le meilleur noeud à explorer
             # enBas est sensé valoir true sauf si on a atteint le bas de l'arbre
             if enBas != true # on a atteint le bas de l'arbre
                 if enBas[2] < upperBound # si la valeur du noeud en bas est meilleure que la borne sup actuelle
                     upperBound = enBas[2]
                     lastBestNode = enBas[1]
-                    println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
+                    verbose && println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
                 end
             end
         end
     end
     aff(root)
-    println("upperBound = ",upperBound)
+    verbose && println("upperBound = ",upperBound)
     if lastBestNode != 0
     	return lastBestNode.passedElts, lastBestNode.e
     else
@@ -199,16 +201,16 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf)
 end
 
 # retourne le meilleur noeud à explorer ainsi que sa lowerBound, si le return vaut false,false c'est qu'aucun noeud ne reste à explorer
-function bestNodeToExplore(node::Node, upperBound::Float64; str="")
-    println("\n",str,"bestNodeToExplore[",node.e.name,"]")
+function bestNodeToExplore(node::Node, upperBound::Float64; str="", verbose = false)
+    verbose && println("\n",str,"bestNodeToExplore[",node.e.name,"]")
     if node.h == 0 # si le noeud est une feuille de l'arbre, il est déjà sondé. On ne doit pas le reregarder
-        println("On est en bas de l'arbre ce noeud n'est pas valable")
+        verbose && println("On est en bas de l'arbre ce noeud n'est pas valable")
         return node,Inf
     elseif length(node.children) == 0 # si le noeuf n'a pas d'enfants alors il est candidat du meilleur noeud
-        println(str,"Ce noeud n'a pas d'enfants, on remonte")
+        verbose && println(str,"Ce noeud n'a pas d'enfants, on remonte")
         return node,node.lowerBound
     else # sinon c'est un noeuf déjà étudié qui possède des enfants. On va descendre dans ceux ci
-        println(str,"Ce noeud a des enfants et n'est pas tout en bas")
+        verbose && println(str,"Ce noeud a des enfants et n'est pas tout en bas")
         # on calcule l'enfant qui possède la plus petite lowerBound
         nodeMin = 0
         min = Inf
@@ -216,13 +218,13 @@ function bestNodeToExplore(node::Node, upperBound::Float64; str="")
         for indexChild in 1:length(node.children) # on itère sur les enfants
             child = node.children[indexChild] # récupération de l'enfant
             if child.lowerBound > upperBound # si l'enfant possède une borne inf plus grande que la borne sup connue
-                println(str,"L'enfant est trop nul on le supprime")
+                verbose && println(str,"L'enfant est trop nul on le supprime")
                 node.children[indexChild] = emptyNode() # on le supprime
             elseif child.empty # l'enfant est déjà supprimé
-                println(str,"Ce noeud a été supprimé")
+                verbose && println(str,"Ce noeud a été supprimé")
             else # si les enfants sont encore vivants
-                println(str,"L'enfant est valide, on appelle bestNodeToExplore sur lui")
-                tuple = bestNodeToExplore(child, upperBound,str=str) # on calcule le meilleur noeuf récursivement
+                verbose && println(str,"L'enfant est valide, on appelle bestNodeToExplore sur lui")
+                tuple = bestNodeToExplore(child, upperBound,str=str, verbose=verbose) # on calcule le meilleur noeuf récursivement
                 if tuple[2] < min # si le noeud a une meilleure borne inf que celle connue
                     nodeMin = tuple[1]
                     min = tuple[2]
@@ -238,8 +240,8 @@ function bestNodeToExplore(node::Node, upperBound::Float64; str="")
 end
 
 # construit les enfants du noeud passé en paramètres
-function exploreNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts::Int, epsilon::Float64)
-    println("exploreNode[",node.e.name," - (",node.dT,",",node.lowerBound,")]")
+function exploreNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts::Int, epsilon::Float64; verbose = false)
+    verbose && println("exploreNode[",node.e.name," - (",node.dT,",",node.lowerBound,")]")
     node.children = Vector{Node}(undef,node.h) # on alloue le vecteur des enfants de ce noeud
     newUpperBound = Inf
     newOptNode = 0
@@ -282,7 +284,7 @@ function exploreNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts
                             indexElt += 1
                         end
                         if !sourceFound
-                            println("ON A PAS TROUVE LA SOURCE WTF CEST PAS NORMAL !!!")
+                            verbose && println("ON A PAS TROUVE LA SOURCE WTF CEST PAS NORMAL !!!")
                             exit()
                         end
                     end
@@ -370,40 +372,44 @@ function isOrderRespected(v::Vector{Elt},lengthV::Int,e::Elt)
 end
 
 # fonction d'affichage de l'arbre
-function printTree(root::Node;str::String="")
+function printTree(root::Node;str::String="", verbose = false)
     if root.probed
-        println(str,"PROBED")
+        verbose && println(str,"PROBED")
     elseif root.empty
-        println(str,"DELETED")
+        verbose && println(str,"DELETED")
     else
-        println(str,"noeud [",root.e.name," - (",root.dT,",",root.lowerBound,")]")
+        verbose && println(str,"noeud [",root.e.name," - (",root.dT,",",root.lowerBound,")]")
         str = string(str,"      ")
         for child in root.children
-            println("[",root.e.name,"]")
-            printTree(child,str=str)
+            verbose && println("[",root.e.name,"]")
+            verbose && printTree(child,str=str, verbose=verbose)
         end
     end
 end
 
-function aff(root::Node)
-    println("\nprintTree :")
-    printTree(root)
-    println("")
+function aff(root::Node; verbose = false)
+    verbose && println("\nprintTree :")
+    verbose && printTree(root, verbose=verbose)
+    verbose && println("")
 end
 
-function affElts(v::Vector{Elt})
-    print("[")
+#ET cette fonction n'est jamais utilisée !
+
+function affElts(v::Vector{Elt}; verbose=false)
+    verbose && print("[")
     for indexElt in 1:length(v)
         try
             e = v[indexElt]
-            print(e.name)
+            verbose && print(e.name)
         catch
-            print("undef")
+            verbose && print("undef")
         end
-        print(",")
+        verbose && print(",")
     end
-    println("]")
+    verbose && println("]")
 end
+
+#Pareil pour ce code la si tu veux le suppr
 
 #=
 
@@ -419,127 +425,127 @@ function branchAndBound(L::Vector{Elt},A::Matrix{Float64})
 
     upperBound = Inf
 
-    println("root = ",root)
+    verbose && println("root = ",root)
 
-    println("")
+    verbose && println("")
     tuple = bestNodeToExplore(root,upperBound)
     lastBestNode = tuple[1]
-    println("lastBestNode = ",lastBestNode.e.name)
+    verbose && println("lastBestNode = ",lastBestNode.e.name)
 
-    println("tuple = ",tuple)
+    verbose && println("tuple = ",tuple)
 
-    println("-------------------------------------------------------------")
+    verbose && println("-------------------------------------------------------------")
 
     aff(root)
 
-    println("")
+    verbose && println("")
     enBas = exploreNode(tuple[1],upperBound,A,nbElts)
     if enBas != true # on a atteint le bas de l'arbre
         if enBas[2] < upperBound
             upperBound = enBas[2]
-            println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
+            verbose && println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
         end
     end
-    println("\n################")
-    println("enBas = ",enBas)
-    println("upperBound = ",upperBound)
-    println("################\n")
+    verbose && println("\n################")
+    verbose && println("enBas = ",enBas)
+    verbose && println("upperBound = ",upperBound)
+    verbose && println("################\n")
 
-    println("root = ",root)
-    println("")
-    println("firstChild = ",root.children[1].e.name)
-    println("")
-    println("secondChild = ",root.children[2].e.name)
-    println("")
-    println("thridChild = ",root.children[3].e.name)
-    println("")
+    verbose && println("root = ",root)
+    verbose && println("")
+    verbose && println("firstChild = ",root.children[1].e.name)
+    verbose && println("")
+    verbose && println("secondChild = ",root.children[2].e.name)
+    verbose && println("")
+    verbose && println("thridChild = ",root.children[3].e.name)
+    verbose && println("")
 
-    println("")
+    verbose && println("")
     tuple = bestNodeToExplore(root,upperBound)
     lastBestNode = tuple[1]
-    println("lastBestNode = ",lastBestNode.e.name)
+    verbose && println("lastBestNode = ",lastBestNode.e.name)
 
-    println("tuple[1] = ",tuple[1].e.name)
-    println("tuple[2] = ",tuple[2])
+    verbose && println("tuple[1] = ",tuple[1].e.name)
+    verbose && println("tuple[2] = ",tuple[2])
 
-    println("-------------------------------------------------------------")
+    verbose && println("-------------------------------------------------------------")
 
     aff(root)
 
-    println("")
+    verbose && println("")
     enBas = exploreNode(tuple[1],upperBound,A,nbElts)
     if enBas != true # on a atteint le bas de l'arbre
         if enBas[2] < upperBound
             upperBound = enBas[2]
-            println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
+            verbose && println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
         end
     end
-    println("\n################")
-    println("enBas = ",enBas)
-    println("upperBound = ",upperBound)
-    println("################\n")
+    verbose && println("\n################")
+    verbose && println("enBas = ",enBas)
+    verbose && println("upperBound = ",upperBound)
+    verbose && println("################\n")
 
-    println("")
+    verbose && println("")
     tuple = bestNodeToExplore(root,upperBound)
     lastBestNode = tuple[1]
-    println("lastBestNode = ",lastBestNode.e.name)
+    verbose && println("lastBestNode = ",lastBestNode.e.name)
 
-    println("tuple[1] = ",tuple[1].e.name)
-    println("tuple[2] = ",tuple[2])
+    verbose && println("tuple[1] = ",tuple[1].e.name)
+    verbose && println("tuple[2] = ",tuple[2])
 
-    println("-------------------------------------------------------------")
+    verbose && println("-------------------------------------------------------------")
 
     aff(root)
 
-    println("")
+    verbose && println("")
     enBas = exploreNode(tuple[1],upperBound,A,nbElts)
     if enBas != true # on a atteint le bas de l'arbre
         if enBas[2] < upperBound
             upperBound = enBas[2]
-            println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
+            verbose && println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
         end
     end
-    println("\n################")
-    println("enBas = ",enBas)
-    println("upperBound = ",upperBound)
-    println("################\n")
+    verbose && println("\n################")
+    verbose && println("enBas = ",enBas)
+    verbose && println("upperBound = ",upperBound)
+    verbose && println("################\n")
 
-    println("")
+    verbose && println("")
     tuple = bestNodeToExplore(root,upperBound)
     lastBestNode = tuple[1]
-    println("lastBestNode = ",lastBestNode.e.name)
+    verbose && println("lastBestNode = ",lastBestNode.e.name)
 
-    println("tuple[1] = ",tuple[1].e.name)
-    println("tuple[2] = ",tuple[2])
+    verbose && println("tuple[1] = ",tuple[1].e.name)
+    verbose && println("tuple[2] = ",tuple[2])
 
-    println("-------------------------------------------------------------")
+    verbose && println("-------------------------------------------------------------")
 
     aff(root)
 
-    println("")
+    verbose && println("")
     enBas = exploreNode(tuple[1],upperBound,A,nbElts)
     if enBas != true # on a atteint le bas de l'arbre
         if enBas[2] < upperBound
             upperBound = enBas[2]
-            println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
+            verbose && println("MEILLEUR NOEUD FINAL -> ",enBas[1].e.name)
         end
     end
-    println("\n################")
-    println("enBas = ",enBas)
-    println("upperBound = ",upperBound)
-    println("################\n")
+    verbose && println("\n################")
+    verbose && println("enBas = ",enBas)
+    verbose && println("upperBound = ",upperBound)
+    verbose && println("################\n")
 
-    println("")
+    verbose && println("")
     tuple = bestNodeToExplore(root,upperBound)
     if tuple[1] == false
-        println("FINI")
-        println("lastBestNode = ",lastBestNode.e.name)
+        verbose && println("FINI")
+        verbose && println("lastBestNode = ",lastBestNode.e.name)
     else
-        println("tuple[1] = ",tuple[1].e.name)
-        println("tuple[2] = ",tuple[2])
+        verbose && println("tuple[1] = ",tuple[1].e.name)
+        verbose && println("tuple[2] = ",tuple[2])
     end
 
-    println("-------------------------------------------------------------")
+    verbose && println("-------------------------------------------------------------")
 
     aff(root)
 end
