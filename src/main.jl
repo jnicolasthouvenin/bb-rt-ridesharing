@@ -76,7 +76,7 @@ function calcCMin(matTime::Array{Float64, 2}, iter::Int)
 	return mini
 end
 
-function simulate(nameSimul::String = "simulation1.dat", nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5; verbose = false)
+function simulate(nameSimul::String, nameFirstStation::String, w::Float64, epsilon::Float64; verbose)
 	# On récupère toutes les données relatives au problème
     allStation = getStations("stations.dat")
     distStation = calculDistLatLong(allStation) / SPEED_VEHICLE
@@ -368,7 +368,7 @@ function simulate(nameSimul::String = "simulation1.dat", nameFirstStation::Strin
 end
 
 # fonction principale
-function main(nameSimul::String = "simulation1.dat", nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5; verbose = false)
+function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5; verbose = false)
 	trip, tripDate = simulate(nameSimul,nameFirstStation,w,epsilon,verbose=verbose)
 
 	print("Trajet de la navette : ")
@@ -380,5 +380,4 @@ function main(nameSimul::String = "simulation1.dat", nameFirstStation::String = 
 		print(trip[i].name)
 		print(" (",round(tripDate[i],digits=0),")")
 	end
-	println("\n")
 end
