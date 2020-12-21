@@ -1,4 +1,9 @@
 
+"""
+Se charge de l'exécution du branch and bound
+"""
+
+# retourne la solution du problème, faux si le problème est impossible
 function branchAndBound(L::Vector{Elt},A::Matrix{Float64},epsilon;debug=Inf, verbose = false)
     # initialisation de l'arbre
     r = Elt(1,R,2,false,false,0.,"r",0.) # création de l'élément racine
@@ -160,6 +165,7 @@ function exploreNode(node::Node, upperBound::Float64, A::Matrix{Float64}, nbElts
     end
 end
 
+# construit l'enfant indexChild du noeud root
 function newChild(root::Node,indexChild::Int,A::Matrix{Float64})
     e = root.futureElts[indexChild] # élement du noeud enfant
     d = A[root.e.id,e.id] # distance entre le noeud root et le noeud enfant
@@ -173,6 +179,7 @@ function newChild(root::Node,indexChild::Int,A::Matrix{Float64})
     return newNode(passedElts,passedDT,futureElts,sumFutureCMin,e,root.h-1,dT,lowerBound)
 end
 
+# construit l'attribut passedDT des fils de node
 function newPassedDT(node::Node)
     list = Vector{Float64}(undef,length(node.passedDT)+1)
     for indexList in 1:length(node.passedDT)
@@ -182,6 +189,7 @@ function newPassedDT(node::Node)
     return list
 end
 
+# retourne la somme les cMin de chaque elt
 function getLowerBound(v::Vector{Elt})
     lb = 0.
     for e in v
@@ -190,6 +198,7 @@ function getLowerBound(v::Vector{Elt})
     return lb
 end
 
+# construit la liste des éléments passés des fils de node
 function newPassedElts(passedElts,e)
     list = Vector{Elt}(undef,length(passedElts)+1)
     for indexList in 1:length(passedElts)
@@ -243,6 +252,7 @@ function printTree(root::Node;str::String="", verbose = false)
     end
 end
 
+# affiche l'arbre des plannings possibles
 function aff(root::Node; verbose = false)
     verbose && println("\nprintTree :")
     verbose && printTree(root, verbose=verbose)

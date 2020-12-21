@@ -3,8 +3,6 @@
 Fichier principal
 """
 
-println("Precompiling packages...")
-
 const MAX_CAPAVEHICLE = 20
 const SPEED_VEHICLE = 20
 
@@ -12,7 +10,7 @@ const SafeFloat64 = Union{Missing, Float64}
 
 @enum Etat S R E Non
 
-#include("structs.jl")
+include("structs.jl")
 include("dataManager.jl")
 include("branchAndBound.jl")
 include("tools.jl")
@@ -78,7 +76,7 @@ function calcCMin(matTime::Array{Float64, 2}, iter::Int)
 	return mini
 end
 
-function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5; verbose = false)
+function simulate(nameSimul::String = "simulation1.dat", nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5; verbose = false)
 	# On récupère toutes les données relatives au problème
     allStation = getStations("stations.dat")
     distStation = calculDistLatLong(allStation) / SPEED_VEHICLE
@@ -117,7 +115,6 @@ function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = 
     
     indReq = 2
     for indReq in 2:nbRequests
-    
     	if trip[iterTrip].state == S
     		indNextStation = dictStation[requests[trip[iterTrip].idReq].departureStation].id
     	elseif trip[iterTrip].state == E
@@ -366,40 +363,22 @@ function main(nameSimul::String = "simulation2.dat", nameFirstStation::String = 
 		iterTrip += 1
 		indTimeStation = nextStat
 	end
+
 	return trip, tripDate
 end
 
-function jules()
-    e1 = Elt(2,E,1,false,false,10.,"e1",2)
-    s2 = Elt(3,S,2,true,false,10.,"s2",1)
-    e2 = Elt(4,E,2,false,true,10.,"e2",1)
-    
-    L = [e1,s2,e2]
+# fonction principale
+function main(nameSimul::String = "simulation1.dat", nameFirstStation::String = "Gare", w::Float64 = 15*60., epsilon::Float64 = 0.5; verbose = false)
+	trip, tripDate = simulate(nameSimul,nameFirstStation,w,epsilon,verbose=verbose)
 
-    A = [
-        0. 3. 4. 5.;
-        3. 0. 7. 2.;
-        4. 7. 0. 1.;
-        5. 2. 1. 0.
-    ]
-
-    # s3 = Elt(5,S,3,true,false,1000.,"s3",1)
-    # e3 = Elt(6,E,3,false,true,1000.,"e3",1)
-
-    # L = [e1,s2,e2,s3,e3]
-
-    # A = [
-    #     0. 3. 4. 5. 3. 7.;
-    #     3. 0. 7. 2. 6. 1.;
-    #     4. 7. 0. 1. 2. 5.;
-    #     5. 2. 1. 0. 4. 3.;
-    #     3. 6. 2. 4. 0. 2.;
-    #     7. 1. 5. 0. 2. 0.
-    # ]
-
-   branchAndBound(L,A, 0.5)
-   #branchAndBoundBis(L,A,100.)
-
-    println("end")
+	print("Trajet de la navette : ")
+	for i in 1:length(trip)
+		if (trip[i].state == R)
+			println("")
+		end
+		print(" -> ")
+		print(trip[i].name)
+		print(" (",round(tripDate[i],digits=0),")")
+	end
+	println("\n")
 end
-

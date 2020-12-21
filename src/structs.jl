@@ -1,6 +1,6 @@
 
 """
-structs.jl déclare les nouveaux types utilisés dans ce projet.
+Déclare les nouveaux types utilisés dans ce projet.
 """
 
 import Base.show
@@ -15,21 +15,14 @@ end
 
 Base.show(io::IO, x::Station) = print(io, x.name)
 
-abstract type element end
-
-#=struct TripRequest
-    s::S
-    e::E
-    w::Int
-    epsilon::Int
-end=#
-
+# objet représentant une requête utilisateur
 struct Request
     t::Int
     departureStation::String
     arrivalStation::String
 end
 
+# objet représentant un élément du planning
 struct Elt
     id::Int
     state::Etat
@@ -41,6 +34,7 @@ struct Elt
     cMin::Float64
 end
 
+# objet représentant un noeud de l'arbre des plannings possibles (pour le branch and bound)
 mutable struct Node
     empty::Bool # si le noeud est supprimé
     probed::Bool # si le noeud est sondé (que tous ses enfants sont sondés ou qu'il ne peut plus posséder d'enfants)
@@ -55,29 +49,20 @@ mutable struct Node
     children::Vector{Node} # noeuds enfants de ce noeud
 end
 
+# retourne un nouvel élément vide (élément supprimé par exemple)
 function emptyElt()
     return Elt(0, Non, 0, true,false, 0., "", 0.)
 end
 
+# retourne un nouveau noeud vide (noeud supprimé car trop mauvais par exemple)
 function emptyNode()
     passedElts = Vector{Elt}(undef,0)
     children= Vector{Node}(undef,0)
     return Node(true,true,passedElts,Vector{Float64}(undef,0),passedElts,0.,emptyElt(),0,0.,0.,children)
 end
 
+# retourne un nouveau noeud
 function newNode(passedElts::Vector{Elt},passedDT::Vector{Float64},futureElts::Vector{Elt},sumFutureCMin::Float64,e::Elt,h::Int,dT::Float64,lowerBound::Float64)
     children = Vector{Node}(undef,0)
     return Node(false,false,passedElts,passedDT,futureElts,sumFutureCMin,e,h,dT,lowerBound,children)
 end
-
-#=Base.show(io::IO, n::Node) = print(io, n.nom," -> ",n.children)
-function Base.show(io::IO, t::Array{Node,1})
-    print(io, "(")
-    for i in 1:length(t)
-        try
-            Base.show(io, t[i])
-        catch
-        end
-    end
-    print(io, ")")
-end=#

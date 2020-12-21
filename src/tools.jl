@@ -1,3 +1,8 @@
+
+"""
+Fonctions auxiliaires
+"""
+
 function myIsLess(elt1::Elt, elt2::Elt)
 	if elt1.idReq == elt2.idReq
 		if elt1.state == E
